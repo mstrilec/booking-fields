@@ -1,0 +1,21 @@
+.dropDownMenu {
+	position: absolute;
+	top: 2.3rem;
+	left: -1.15rem;
+	width: 120px;
+	padding: 15px;
+	z-index: 1000;
+	background-color: white;
+	border: 1px solid gray;
+	border-radius: 15px;
+}
+
+.dropDownMenu::before {
+	content: '';
+	position: absolute;
+	top: -10px;
+	left: 20px;
+	border-left: 10px solid transparent;
+	border-right: 10px solid transparent;
+	border-bottom: 10px solid white;
+}
