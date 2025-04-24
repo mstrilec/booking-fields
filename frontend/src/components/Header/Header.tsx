@@ -11,19 +11,19 @@ const Header = () => {
 	const navigate = useNavigate()
 
 	return (
-		<header className='bg-[#2156a1] h-[70px]'>
-			<div className='container mx-auto flex justify-between items-center h-full px-4 text-white'>
-				<a href='/'>
+		<header className='bg-[#1171f5] h-[70px]'>
+			<div className='container mx-auto flex justify-between items-center h-full px-4 text-[#f7f9fc]'>
+				<a href='/' className='rounded-lg p-2'>
 					<img src={logo} alt='Sportbook' className='w-38 h-auto' />
 				</a>
-				<nav>
-					<ul className='flex gap-15 text-white'>
+				<nav className='mr-15'>
+					<ul className='flex gap-15 text-[#] font-semibold'>
 						<li>
 							<a
 								href='/fields'
 								className='relative inline-block pb-1 after:content-[""] after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 after:bg-current after:transition-all after:duration-300 hover:after:w-full'
 							>
-								Fields
+								Клуби
 							</a>
 						</li>
 						<li>
@@ -31,7 +31,7 @@ const Header = () => {
 								href='/about'
 								className='relative inline-block pb-1 after:content-[""] after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 after:bg-current after:transition-all after:duration-300 hover:after:w-full'
 							>
-								About us
+								Про нас
 							</a>
 						</li>
 					</ul>
@@ -49,10 +49,10 @@ const Header = () => {
 					</div>
 				) : (
 					<button
-						className='bg-[#25b68f] text-white font-semibold px-5 py-2 rounded-lg hover:bg-[#1e9e7b] transition cursor-pointer'
+						className='bg-[#fed91d] text-[#1171f5] font-semibold px-5 py-2 rounded-lg hover:bg-[#f4b400] cursor-pointer transition duration-300'
 						onClick={() => navigate('/register')}
 					>
-						Register
+						Увійти
 					</button>
 				)}
 			</div>
