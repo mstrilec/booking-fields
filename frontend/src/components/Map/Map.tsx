@@ -8,7 +8,7 @@ import { useState } from 'react'
 
 const Map = ({ fields }: { fields: any[] }) => {
 	const { isLoaded } = useJsApiLoader({
-		googleMapsApiKey: 'AIzaSyDXpaLmYSa1yVkCWsf4yxTmEgoqwxICPhQ',
+		googleMapsApiKey: '',
 	})
 
 	const [selectedField, setSelectedField] = useState<any>(null)
