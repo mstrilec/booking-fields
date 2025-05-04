@@ -17,9 +17,6 @@ export class BookingsService {
     private bookingsRepo: Repository<Booking>,
   ) {}
   async findAll(user: User) {
-    if (user.role === 'admin') {
-      return this.bookingsRepo.find({ relations: ['user', 'field'] });
-    }
     return this.bookingsRepo.find({
       where: { user: { id: user.id } },
       relations: ['field'],

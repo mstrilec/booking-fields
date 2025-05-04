@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
 const Login = () => {
@@ -39,12 +39,12 @@ const Login = () => {
 						className='border p-2 rounded'
 					/>
 					{error && <p className='text-red-500'>{error}</p>}
-					<a
-						href='/register'
+					<Link
+						to='/register'
 						className='text-center hover:underline text-blue-600'
 					>
 						Don't have an account? Register
-					</a>
+					</Link>
 					<button className='bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700'>
 						Login
 					</button>
