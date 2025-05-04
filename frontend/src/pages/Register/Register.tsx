@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
 const Register = () => {
@@ -76,12 +76,12 @@ const Register = () => {
 						className='border p-2 rounded'
 					/>
 					{error && <p className='text-red-500'>{error}</p>}
-					<a
-						href='/login'
+					<Link
+						to='/login'
 						className='text-center hover:underline text-blue-600'
 					>
 						Already have an account? Log in
-					</a>
+					</Link>
 					<button className='bg-[#25b68f] text-white font-semibold px-5 py-2 rounded-lg hover:bg-[#1e9e7b] transition cursor-pointer'>
 						Register
 					</button>

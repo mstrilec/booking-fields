@@ -47,17 +47,48 @@ export class FieldsService {
 
       const result = data.result;
 
+      const localField = await this.fieldsRepo.findOne({ where: { placeId } });
+
       return {
         placeId: result.place_id,
         name: result.name,
         address: result.formatted_address,
-        phoneNumber: result.international_phone_number,
+        phoneNumber:
+          localField?.phoneNumber ?? result.international_phone_number,
+        price: localField?.price,
+        additionalInfo: localField?.additionalInfo,
         location: result.geometry?.location,
         website: result.website,
         reviews: result.reviews,
+        photos: result.photos ?? [],
       };
     } catch {
       throw new NotFoundException('Field not found');
+    }
+  }
+
+  async createFieldFromPlaceId(placeId: string): Promise<Field> {
+    const existingField = await this.fieldsRepo.findOne({ where: { placeId } });
+    if (existingField) {
+      return existingField;
+    }
+
+    try {
+      const fieldData = await this.getFieldByPlaceId(placeId);
+
+      const newField = this.fieldsRepo.create({
+        placeId: fieldData.placeId,
+        phoneNumber: fieldData.phoneNumber ?? undefined,
+        price: undefined,
+        additionalInfo: undefined,
+      });
+
+      return await this.fieldsRepo.save(newField);
+    } catch (error) {
+      console.error(`Error creating field with placeId ${placeId}:`, error);
+      throw new NotFoundException(
+        'Could not create field from Google Places API',
+      );
     }
   }
 

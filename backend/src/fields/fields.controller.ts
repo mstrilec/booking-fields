@@ -30,6 +30,11 @@ export class FieldsController {
     return this.fieldService.getFieldByPlaceId(placeId);
   }
 
+  @Post('create')
+  createField(@Body('placeId') placeId: string): Promise<Field> {
+    return this.fieldService.createFieldFromPlaceId(placeId);
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.Admin)
   @Patch(':placeId')

@@ -16,6 +16,12 @@ export interface GooglePlacesResult {
     text: string;
     time: number;
   }>;
+  photos?: Array<{
+    height: number;
+    html_attributions: string[];
+    photo_reference: string;
+    width: number;
+  }>;
 }
 
 export interface GoogleNearbySearchResponse {
@@ -44,4 +50,12 @@ export interface FieldDetails {
     text: string;
     time: number;
   }>;
+  photos?: Array<{
+    height: number;
+    html_attributions: string[];
+    photo_reference: string;
+    width: number;
+  }>;
+  price?: number;
+  additionalInfo?: string;
 }
