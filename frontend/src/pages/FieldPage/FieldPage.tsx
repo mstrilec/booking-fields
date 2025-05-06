@@ -122,7 +122,7 @@ const FieldPage = () => {
 		<div className='container mx-auto px-4 mt-[24px]'>
 			<div className='flex justify-between'>
 				<div>
-					{/* {field.photos && field.photos.length > 0 ? (
+					{field.photos && field.photos.length > 0 ? (
 						<img
 							src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=600&photo_reference=${
 								field.photos[0].photo_reference
@@ -130,11 +130,11 @@ const FieldPage = () => {
 							alt={field.name}
 							className='w-full h-64 object-cover rounded-xl mb-6'
 						/>
-					) : ( */}
-					<div className='w-full h-64 flex items-center justify-center bg-gray-200 rounded-xl mb-6'>
-						<span className='text-gray-500 text-xl'>Немає зображення</span>
-					</div>
-					{/* )} */}
+					) : (
+						<div className='w-full h-64 flex items-center justify-center bg-gray-200 rounded-xl mb-6'>
+							<span className='text-gray-500 text-xl'>Немає зображення</span>
+						</div>
+					)}
 
 					<h2 className='text-3xl font-semibold mb-4'>{field.name}</h2>
 					<p className='text-lg text-gray-600 mb-2'>{field.address}</p>

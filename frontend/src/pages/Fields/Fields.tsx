@@ -1,8 +1,5 @@
-import { setHours } from 'date-fns/setHours'
-import { setMinutes } from 'date-fns/setMinutes'
 import { Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import DatePicker from 'react-datepicker'
 import { useNavigate } from 'react-router-dom'
 import { Breadcrumbs } from '../../components/Breadcrumbs/Breadcrumbs'
 import DropDown from '../../components/DropDown/DropDown'
@@ -13,11 +10,15 @@ const Fields = () => {
 	const [fields, setFields] = useState([])
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState(null)
-	const [startDate, setStartDate] = useState<Date | null>(null)
-	const [time, setTime] = useState<Date | null>(null)
 	const [duration, setDuration] = useState<number>(60)
 	const [sport, setSport] = useState<number>(0)
 	const navigate = useNavigate()
+	const [businessStatus, setBusinessStatus] = useState<string>('all')
+	const [ratingSort, setRatingSort] = useState<string>('none')
+	const [reviewsSort, setReviewsSort] = useState<string>('none')
+	const [priceSort, setPriceSort] = useState<string>('none')
+	const [filteredFields, setFilteredFields] = useState([])
+	const [searchQuery, setSearchQuery] = useState('')
 
 	console.log(fields)
 
@@ -50,6 +51,31 @@ const Fields = () => {
 		{ label: 'На 12 годин', value: 720 },
 	]
 
+	const optionsBusinessStatus = [
+		{ label: 'Всі статуси', value: 'all' },
+		{ label: '✅ Відкриті', value: 'OPERATIONAL' },
+		{ label: '⏱️ Тимчасово закриті', value: 'CLOSED_TEMPORARILY' },
+		{ label: '❌ Постійно закриті', value: 'CLOSED_PERMANENTLY' },
+	]
+
+	const optionsRating = [
+		{ label: 'Рейтинг', value: 'none' },
+		{ label: '⭐ Рейтинг: високий-низький', value: 'desc' },
+		{ label: '⭐ Рейтинг: низький-високий', value: 'asc' },
+	]
+
+	const optionsReviews = [
+		{ label: 'Кількість відгуків', value: 'none' },
+		{ label: '👥 Відгуки: багато-мало', value: 'desc' },
+		{ label: '👤 Відгуки: мало-багато', value: 'asc' },
+	]
+
+	const optionsPrice = [
+		{ label: 'Ціна', value: 'none' },
+		{ label: '💰 Ціна: висока-низька', value: 'desc' },
+		{ label: '💸 Ціна: низька-висока', value: 'asc' },
+	]
+
 	useEffect(() => {
 		const fetchFields = async () => {
 			try {
@@ -68,6 +94,53 @@ const Fields = () => {
 		fetchFields()
 	}, [])
 
+	useEffect(() => {
+		if (!fields.length) return
+
+		let result = [...fields]
+
+		if (searchQuery.trim()) {
+			const query = searchQuery.toLowerCase().trim()
+			result = result.filter(
+				field =>
+					field.name.toLowerCase().includes(query) ||
+					(field.vicinity && field.vicinity.toLowerCase().includes(query))
+			)
+		}
+
+		if (businessStatus !== 'all') {
+			result = result.filter(field => field.business_status === businessStatus)
+		}
+
+		if (ratingSort !== 'none') {
+			result = [...result].sort((a, b) => {
+				const ratingA = a.rating || 0
+				const ratingB = b.rating || 0
+				return ratingSort === 'desc' ? ratingB - ratingA : ratingA - ratingB
+			})
+		}
+
+		if (reviewsSort !== 'none') {
+			result = [...result].sort((a, b) => {
+				const reviewsA = a.user_ratings_total || 0
+				const reviewsB = b.user_ratings_total || 0
+				return reviewsSort === 'desc'
+					? reviewsB - reviewsA
+					: reviewsA - reviewsB
+			})
+		}
+
+		if (priceSort !== 'none') {
+			result = [...result].sort((a, b) => {
+				const priceA = a.price || 0
+				const priceB = b.price || 0
+				return priceSort === 'desc' ? priceB - priceA : priceA - priceB
+			})
+		}
+
+		setFilteredFields(result)
+	}, [fields, businessStatus, ratingSort, reviewsSort, priceSort, searchQuery])
+
 	console.log('sport: ', sport)
 	console.log('duration: ', duration)
 
@@ -79,43 +152,30 @@ const Fields = () => {
 			<div>
 				<Breadcrumbs />
 				<div>
-					<div className='flex items-center gap-4 w-full'>
+					<div className='flex items-center gap-4 w-full mt-4'>
 						<DropDown
-							options={optionsSport}
-							placeholder='Всі види спорту'
-							width='20rem'
-							onChange={option => setSport(option.value)}
+							options={optionsBusinessStatus}
+							placeholder='Всі статуси'
+							width='18rem'
+							onChange={option => setBusinessStatus(option.value)}
 						/>
-						<div className='relative'>
-							<DatePicker
-								selected={startDate}
-								onChange={date => setStartDate(date)}
-								className='bg-white rounded-xl shadow-lg text-[#162328] px-4 py-3 w-full focus:outline-none'
-								dateFormat='dd/MM/yyyy'
-								minDate={new Date()}
-								placeholderText='Виберіть дату'
-							/>
-						</div>
-						<div className='relative'>
-							<DatePicker
-								selected={time}
-								onChange={date => setTime(date)}
-								showTimeSelect
-								showTimeSelectOnly
-								timeIntervals={30}
-								timeCaption='Час'
-								dateFormat='HH:mm'
-								placeholderText='Будь-який час'
-								className='bg-white rounded-xl shadow-lg text-[#162328] px-4 py-3 w-full focus:outline-none'
-								minTime={setHours(setMinutes(new Date(), 0), 8)}
-								maxTime={setHours(setMinutes(new Date(), 0), 22)}
-							/>
-						</div>
 						<DropDown
-							options={optionsTime}
-							placeholder='На 1 годину'
-							width='16rem'
-							onChange={option => setDuration(option.value)}
+							options={optionsRating}
+							placeholder='Рейтинг'
+							width='18rem'
+							onChange={option => setRatingSort(option.value)}
+						/>
+						<DropDown
+							options={optionsReviews}
+							placeholder='Кількість відгуків'
+							width='24rem'
+							onChange={option => setReviewsSort(option.value)}
+						/>
+						<DropDown
+							options={optionsPrice}
+							placeholder='Ціна'
+							width='18rem'
+							onChange={option => setPriceSort(option.value)}
 						/>
 					</div>
 				</div>
@@ -127,17 +187,19 @@ const Fields = () => {
 					<input
 						type='search'
 						placeholder='Введіть назву клубу'
+						value={searchQuery}
+						onChange={(e) => setSearchQuery(e.target.value)}
 						className='bg-white rounded-xl shadow-lg max-h-60 overflow-auto text-[#162328] px-4 py-3 pl-10 w-full 
              focus:border-[#1171f5] focus:ring-2 focus:ring-[#1171f5] focus:outline-none 
              border border-transparent transition duration-300'
 					/>
 				</div>
 				<p className='text-gray-400 text-lg mt-4'>
-					Ми знайшли {fields.length} варіантів
+					Ми знайшли {filteredFields.length} варіантів
 				</p>
 				<hr className='mt-4 border-gray-400' />
 				<div className='grid grid-cols-1 md:grid-cols-2 gap-6 mt-6'>
-					{fields.map((field, index) => (
+					{filteredFields.map((field, index) => (
 						<div
 							key={index}
 							className='bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition duration-300 cursor-pointer flex flex-col justify-between'
