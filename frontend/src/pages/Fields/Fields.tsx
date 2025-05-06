@@ -19,8 +19,34 @@ const Fields = () => {
 	const [priceSort, setPriceSort] = useState<string>('none')
 	const [filteredFields, setFilteredFields] = useState([])
 	const [searchQuery, setSearchQuery] = useState('')
+	const [city, setCity] = useState<string>('Київ')
 
 	console.log(fields)
+
+	const optionsCities = [
+		{ label: 'Київ', value: 'Київ' },
+		{ label: 'Львів', value: 'Львів' },
+		{ label: 'Харків', value: 'Харків' },
+		{ label: 'Одеса', value: 'Одеса' },
+		{ label: 'Дніпро', value: 'Дніпро' },
+		{ label: 'Запоріжжя', value: 'Запоріжжя' },
+		{ label: 'Вінниця', value: 'Вінниця' },
+		{ label: 'Чернівці', value: 'Чернівці' },
+		{ label: 'Івано-Франківськ', value: 'Івано-Франківськ' },
+		{ label: 'Тернопіль', value: 'Тернопіль' },
+		{ label: 'Луцьк', value: 'Луцьк' },
+		{ label: 'Рівне', value: 'Рівне' },
+		{ label: 'Житомир', value: 'Житомир' },
+		{ label: 'Хмельницький', value: 'Хмельницький' },
+		{ label: 'Черкаси', value: 'Черкаси' },
+		{ label: 'Полтава', value: 'Полтава' },
+		{ label: 'Суми', value: 'Суми' },
+		{ label: 'Чернігів', value: 'Чернігів' },
+		{ label: 'Миколаїв', value: 'Миколаїв' },
+		{ label: 'Херсон', value: 'Херсон' },
+		{ label: 'Кропивницький', value: 'Кропивницький' },
+		{ label: 'Ужгород', value: 'Ужгород' },
+	]
 
 	const optionsSport = [
 		{ label: 'Всі види спорту', value: 0 },
@@ -80,7 +106,7 @@ const Fields = () => {
 		const fetchFields = async () => {
 			try {
 				setLoading(true)
-				const fieldsData = await getNearbyFields()
+				const fieldsData = await getNearbyFields(city)
 				setFields(fieldsData)
 				setError(null)
 			} catch (err) {
@@ -92,7 +118,7 @@ const Fields = () => {
 		}
 
 		fetchFields()
-	}, [])
+	}, [city])
 
 	useEffect(() => {
 		if (!fields.length) return
@@ -179,16 +205,24 @@ const Fields = () => {
 						/>
 					</div>
 				</div>
-				<h2 className='text-3xl font-semibold mt-8 mb-4'>
-					Клуби в місті <span className='text-[#1171f5]'>Чернівці</span>
-				</h2>
+				<div className='flex items-center h-[max-content] gap-4 mt-4 mb-4'>
+					<h2 className='text-3xl font-semibold'>
+						Клуби в місті {city}
+					</h2>
+					<DropDown
+						options={optionsCities}
+						placeholder={city}
+						width='20rem'
+						onChange={option => setCity(option.value)}
+					/>
+				</div>
 				<div className='relative w-full'>
 					<Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5' />
 					<input
 						type='search'
 						placeholder='Введіть назву клубу'
 						value={searchQuery}
-						onChange={(e) => setSearchQuery(e.target.value)}
+						onChange={e => setSearchQuery(e.target.value)}
 						className='bg-white rounded-xl shadow-lg max-h-60 overflow-auto text-[#162328] px-4 py-3 pl-10 w-full 
              focus:border-[#1171f5] focus:ring-2 focus:ring-[#1171f5] focus:outline-none 
              border border-transparent transition duration-300'

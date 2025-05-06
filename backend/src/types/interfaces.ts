@@ -1,3 +1,5 @@
+import { City } from './enums';
+
 export interface GooglePlacesResult {
   place_id: string;
   name: string;
@@ -58,4 +60,10 @@ export interface FieldDetails {
   }>;
   price?: number;
   additionalInfo?: string;
+}
+
+export interface FindNearbyFieldsOptions {
+  city?: City;
+  radius?: number;
+  type?: string;
 }
