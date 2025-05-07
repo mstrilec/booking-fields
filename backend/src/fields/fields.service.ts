@@ -52,7 +52,23 @@ export class FieldsService {
 
       const result = data.result;
 
-      const localField = await this.fieldsRepo.findOne({ where: { placeId } });
+      const localField = await this.fieldsRepo.findOne({
+        where: { placeId },
+        relations: ['comments', 'comments.user'],
+      });
+
+      const comments =
+        localField?.comments?.map((comment) => ({
+          id: comment.id,
+          text: comment.text,
+          createdAt: comment.createdAt,
+          user: {
+            id: comment.user.id,
+            firstName: comment.user.firstName,
+            lastName: comment.user.lastName,
+            email: comment.user.email,
+          },
+        })) || [];
 
       return {
         placeId: result.place_id,
@@ -66,6 +82,7 @@ export class FieldsService {
         website: result.website,
         reviews: result.reviews,
         photos: result.photos ?? [],
+        comments: comments,
       };
     } catch {
       throw new NotFoundException('Field not found');

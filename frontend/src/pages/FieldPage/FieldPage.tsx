@@ -1,11 +1,11 @@
 import { setHours } from 'date-fns/setHours'
 import { setMinutes } from 'date-fns/setMinutes'
-import { User } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import DatePicker from 'react-datepicker'
 import { Link, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import AdminFieldEditor from '../../components/AdminFieldEditor/AdminFieldEditor'
+import CommentSection from '../../components/CommentSection/CommentSection'
 import DropDown from '../../components/DropDown/DropDown'
 import { useAuth } from '../../context/AuthContext'
 import { createBooking } from '../../services/bookingService'
@@ -113,6 +113,15 @@ const FieldPage = () => {
 		}
 	}
 
+	const handleCommentAdded = async () => {
+		try {
+			const updatedField = await getFieldByPlaceId(placeId)
+			setField(updatedField)
+		} catch (err) {
+			console.error('Не вдалося оновити поле після коментаря:', err)
+		}
+	}
+
 	console.log('field:', field)
 
 	if (loading) return <div className='loading'>Завантаження...</div>
@@ -210,31 +219,12 @@ const FieldPage = () => {
 				</div>
 			</div>
 			<div className='mt-6'>
-				<h2 className='text-2xl font-semibold mb-4'>Відгуки</h2>
-				{field.reviews && field.reviews.length > 0 ? (
-					<ul className='space-y-4'>
-						{field.reviews.map((review, index) => (
-							<li
-								key={index}
-								className='flex items-start gap-4 p-4 bg-gray-100 rounded-xl shadow-sm'
-							>
-								<div className='flex-shrink-0'>
-									<div className='bg-blue-500 text-white p-2 rounded-full'>
-										<User size={24} />
-									</div>
-								</div>
-								<div>
-									<p className='font-semibold text-gray-800'>
-										{review.author_name}
-									</p>
-									<p className='text-gray-600 mt-1'>{review.text}</p>
-								</div>
-							</li>
-						))}
-					</ul>
-				) : (
-					<p className='text-gray-500'>Відгуків немає.</p>
-				)}
+				<CommentSection
+					onCommentAdded={handleCommentAdded}
+					placeId={placeId}
+					comments={field.comments}
+					googleReviews={field.reviews}
+				/>
 			</div>
 		</div>
 	)

@@ -60,6 +60,17 @@ export interface FieldDetails {
   }>;
   price?: number;
   additionalInfo?: string;
+  comments?: Array<{
+    id: number;
+    text: string;
+    createdAt: Date;
+    user: {
+      id: number;
+      firstName: string;
+      lastName: string;
+      email: string;
+    };
+  }>;
 }
 
 export interface FindNearbyFieldsOptions {

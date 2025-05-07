@@ -1,5 +1,6 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Booking } from './booking.entity';
+import { Comment } from './comment.entity';
 
 @Entity()
 export class Field {
@@ -20,4 +21,7 @@ export class Field {
 
   @OneToMany(() => Booking, (booking) => booking.field)
   bookings: Booking[];
+
+  @OneToMany(() => Comment, (comment) => comment.field)
+  comments: Comment[];
 }
