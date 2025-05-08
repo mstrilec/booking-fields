@@ -2,9 +2,10 @@ import axios from 'axios'
 
 const API_URL = 'http://localhost:5000'
 
-export const getNearbyFields = async () => {
+export const getNearbyFields = async city => {
 	try {
-		const response = await axios.get(`${API_URL}/fields`)
+		const params = city ? { city } : {}
+		const response = await axios.get(`${API_URL}/fields`, { params })
 		return response.data
 	} catch (error) {
 		console.error('Error fetching nearby fields:', error)

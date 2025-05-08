@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { FieldsModule } from './fields/fields.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { FieldsModule } from './fields/fields.module';
     UsersModule,
     BookingsModule,
     FieldsModule,
+    CommentsModule,
   ],
   controllers: [],
   providers: [],

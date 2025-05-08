@@ -19,36 +19,34 @@ const Fields = () => {
 	const [priceSort, setPriceSort] = useState<string>('none')
 	const [filteredFields, setFilteredFields] = useState([])
 	const [searchQuery, setSearchQuery] = useState('')
+	const [city, setCity] = useState<string>('Київ')
+	const storedCity = sessionStorage.getItem('userCity')
 
 	console.log(fields)
 
-	const optionsSport = [
-		{ label: 'Всі види спорту', value: 0 },
-		{ label: '⚽ Футбол', value: 1 },
-		{ label: '🏀 Баскетбол', value: 2 },
-		{ label: '🎾 Теніс', value: 3 },
-		{ label: '🏐 Волейбол', value: 4 },
-		{ label: '🏓 Настільний теніс', value: 5 },
-		{ label: '🏸 Бадмінтон', value: 6 },
-		{ label: '🏋️‍♂️ Фітнес', value: 7 },
-		{ label: '🏊‍♂️ Плавання', value: 8 },
-		{ label: '🚴‍♂️ Велоспорт', value: 9 },
-		{ label: '🏇 Коні', value: 10 },
-	]
-
-	const optionsTime = [
-		{ label: 'На 1 годину', value: 60 },
-		{ label: 'На 2 години', value: 120 },
-		{ label: 'На 3 години', value: 180 },
-		{ label: 'На 4 години', value: 240 },
-		{ label: 'На 5 годин', value: 300 },
-		{ label: 'На 6 годин', value: 360 },
-		{ label: 'На 7 годин', value: 420 },
-		{ label: 'На 8 годин', value: 480 },
-		{ label: 'На 9 годин', value: 540 },
-		{ label: 'На 10 годин', value: 600 },
-		{ label: 'На 11 годин', value: 660 },
-		{ label: 'На 12 годин', value: 720 },
+	const optionsCities = [
+		{ label: 'Київ', value: 'Київ' },
+		{ label: 'Львів', value: 'Львів' },
+		{ label: 'Харків', value: 'Харків' },
+		{ label: 'Одеса', value: 'Одеса' },
+		{ label: 'Дніпро', value: 'Дніпро' },
+		{ label: 'Запоріжжя', value: 'Запоріжжя' },
+		{ label: 'Вінниця', value: 'Вінниця' },
+		{ label: 'Чернівці', value: 'Чернівці' },
+		{ label: 'Івано-Франківськ', value: 'Івано-Франківськ' },
+		{ label: 'Тернопіль', value: 'Тернопіль' },
+		{ label: 'Луцьк', value: 'Луцьк' },
+		{ label: 'Рівне', value: 'Рівне' },
+		{ label: 'Житомир', value: 'Житомир' },
+		{ label: 'Хмельницький', value: 'Хмельницький' },
+		{ label: 'Черкаси', value: 'Черкаси' },
+		{ label: 'Полтава', value: 'Полтава' },
+		{ label: 'Суми', value: 'Суми' },
+		{ label: 'Чернігів', value: 'Чернігів' },
+		{ label: 'Миколаїв', value: 'Миколаїв' },
+		{ label: 'Херсон', value: 'Херсон' },
+		{ label: 'Кропивницький', value: 'Кропивницький' },
+		{ label: 'Ужгород', value: 'Ужгород' },
 	]
 
 	const optionsBusinessStatus = [
@@ -77,10 +75,51 @@ const Fields = () => {
 	]
 
 	useEffect(() => {
+		const storedCity = sessionStorage.getItem('userCity')
+
+		if (storedCity) {
+			setCity(storedCity)
+		} else {
+			if (navigator.geolocation) {
+				navigator.geolocation.getCurrentPosition(
+					async position => {
+						const { latitude, longitude } = position.coords
+						try {
+							const res = await fetch(
+								`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${
+									import.meta.env.VITE_GOOGLE_API_KEY
+								}&language=uk`
+							)
+							const data = await res.json()
+							const cityComponent = data.results[0]?.address_components.find(
+								c => c.types.includes('locality')
+							)
+							const detectedCity = cityComponent?.long_name
+
+							if (
+								detectedCity &&
+								optionsCities.find(option => option.value === detectedCity)
+							) {
+								sessionStorage.setItem('userCity', detectedCity)
+								setCity(detectedCity)
+							}
+						} catch (error) {
+							console.error('Помилка визначення міста:', error)
+						}
+					},
+					error => {
+						console.warn('Геолокацію відхилено або помилка:', error)
+					}
+				)
+			}
+		}
+	}, [])
+
+	useEffect(() => {
 		const fetchFields = async () => {
 			try {
 				setLoading(true)
-				const fieldsData = await getNearbyFields()
+				const fieldsData = await getNearbyFields(city)
 				setFields(fieldsData)
 				setError(null)
 			} catch (err) {
@@ -92,7 +131,7 @@ const Fields = () => {
 		}
 
 		fetchFields()
-	}, [])
+	}, [city])
 
 	useEffect(() => {
 		if (!fields.length) return
@@ -179,16 +218,25 @@ const Fields = () => {
 						/>
 					</div>
 				</div>
-				<h2 className='text-3xl font-semibold mt-8 mb-4'>
-					Клуби в місті <span className='text-[#1171f5]'>Чернівці</span>
-				</h2>
+				<div className='flex items-center h-[max-content] gap-4 mt-4 mb-4'>
+					<h2 className='text-3xl font-semibold'>Клуби в місті {city}</h2>
+					<DropDown
+						options={optionsCities}
+						placeholder={city}
+						width='20rem'
+						onChange={option => {
+							sessionStorage.setItem('userCity', option.value)
+							setCity(option.value)
+						}}
+					/>
+				</div>
 				<div className='relative w-full'>
 					<Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5' />
 					<input
 						type='search'
 						placeholder='Введіть назву клубу'
 						value={searchQuery}
-						onChange={(e) => setSearchQuery(e.target.value)}
+						onChange={e => setSearchQuery(e.target.value)}
 						className='bg-white rounded-xl shadow-lg max-h-60 overflow-auto text-[#162328] px-4 py-3 pl-10 w-full 
              focus:border-[#1171f5] focus:ring-2 focus:ring-[#1171f5] focus:outline-none 
              border border-transparent transition duration-300'

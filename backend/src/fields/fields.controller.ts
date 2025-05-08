@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { Roles } from '../decorators/roles.decorator';
@@ -12,8 +13,12 @@ import { UpdateFieldDto } from '../dto/update-field.dto';
 import { Field } from '../entities/field.entity';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
-import { Role } from '../types/enums';
-import { FieldDetails, GooglePlacesResult } from '../types/interfaces';
+import { City, Role } from '../types/enums';
+import {
+  FieldDetails,
+  FindNearbyFieldsOptions,
+  GooglePlacesResult,
+} from '../types/interfaces';
 import { FieldsService } from './fields.service';
 
 @Controller('fields')
@@ -21,8 +26,21 @@ export class FieldsController {
   constructor(private fieldService: FieldsService) {}
 
   @Get()
-  getNearbyFields(): Promise<GooglePlacesResult[]> {
-    return this.fieldService.getNearbyFields();
+  getNearbyFields(
+    @Query('city') city?: City,
+    @Query('radius') radius?: number,
+  ): Promise<GooglePlacesResult[]> {
+    const options: FindNearbyFieldsOptions = {};
+
+    if (city) {
+      options.city = city;
+    }
+
+    if (radius) {
+      options.radius = radius;
+    }
+
+    return this.fieldService.getNearbyFields(options);
   }
 
   @Get(':placeId')

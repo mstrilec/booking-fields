@@ -5,12 +5,15 @@ import { AxiosResponse } from 'axios';
 import { Repository } from 'typeorm';
 import { UpdateFieldDto } from '../dto/update-field.dto';
 import { Field } from '../entities/field.entity';
+import { City } from '../types/enums';
 import {
   FieldDetails,
+  FindNearbyFieldsOptions,
   GoogleNearbySearchResponse,
   GooglePlaceDetailsResponse,
   GooglePlacesResult,
 } from '../types/interfaces';
+import { CITY_COORDINATES } from '../types/variables';
 
 @Injectable()
 export class FieldsService {
@@ -20,10 +23,12 @@ export class FieldsService {
     private fieldsRepo: Repository<Field>,
   ) {}
 
-  async getNearbyFields(): Promise<GooglePlacesResult[]> {
-    const location = '50.4501,30.5234';
-    const radius = 5000;
-    const type = 'stadium';
+  async getNearbyFields(
+    options: FindNearbyFieldsOptions = {},
+  ): Promise<GooglePlacesResult[]> {
+    const { city = City.Kyiv, radius = 5000, type = 'stadium' } = options;
+
+    const location = CITY_COORDINATES[city];
     const key = process.env.GOOGLE_API_KEY;
     const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location}&radius=${radius}&type=${type}&key=${key}`;
 
@@ -47,7 +52,23 @@ export class FieldsService {
 
       const result = data.result;
 
-      const localField = await this.fieldsRepo.findOne({ where: { placeId } });
+      const localField = await this.fieldsRepo.findOne({
+        where: { placeId },
+        relations: ['comments', 'comments.user'],
+      });
+
+      const comments =
+        localField?.comments?.map((comment) => ({
+          id: comment.id,
+          text: comment.text,
+          createdAt: comment.createdAt,
+          user: {
+            id: comment.user.id,
+            firstName: comment.user.firstName,
+            lastName: comment.user.lastName,
+            email: comment.user.email,
+          },
+        })) || [];
 
       return {
         placeId: result.place_id,
@@ -61,6 +82,7 @@ export class FieldsService {
         website: result.website,
         reviews: result.reviews,
         photos: result.photos ?? [],
+        comments: comments,
       };
     } catch {
       throw new NotFoundException('Field not found');
