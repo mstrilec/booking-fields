@@ -114,6 +114,11 @@ const CommentSection: React.FC<CommentSectionProps> = ({
 	return (
 		<div className='mt-6'>
 			<h2 className='text-2xl font-semibold mb-4'>Відгуки та коментарі</h2>
+			{!user && (
+				<div className='mt-4 mb-4 p-3 bg-blue-50 rounded-lg text-blue-700'>
+					<p>Увійдіть, щоб залишити свій коментар.</p>
+				</div>
+			)}
 
 			{user && (
 				<form onSubmit={handleSubmit} className='mb-6'>
@@ -182,12 +187,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({
 				</ul>
 			) : (
 				<p className='text-gray-500'>Відгуків та коментарів немає.</p>
-			)}
-
-			{!user && (
-				<div className='mt-4 p-3 bg-blue-50 rounded-lg text-blue-700'>
-					<p>Увійдіть, щоб залишити свій коментар.</p>
-				</div>
 			)}
 		</div>
 	)
