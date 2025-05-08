@@ -20,6 +20,7 @@ const Fields = () => {
 	const [filteredFields, setFilteredFields] = useState([])
 	const [searchQuery, setSearchQuery] = useState('')
 	const [city, setCity] = useState<string>('Київ')
+	const storedCity = sessionStorage.getItem('userCity')
 
 	console.log(fields)
 
@@ -48,35 +49,6 @@ const Fields = () => {
 		{ label: 'Ужгород', value: 'Ужгород' },
 	]
 
-	const optionsSport = [
-		{ label: 'Всі види спорту', value: 0 },
-		{ label: '⚽ Футбол', value: 1 },
-		{ label: '🏀 Баскетбол', value: 2 },
-		{ label: '🎾 Теніс', value: 3 },
-		{ label: '🏐 Волейбол', value: 4 },
-		{ label: '🏓 Настільний теніс', value: 5 },
-		{ label: '🏸 Бадмінтон', value: 6 },
-		{ label: '🏋️‍♂️ Фітнес', value: 7 },
-		{ label: '🏊‍♂️ Плавання', value: 8 },
-		{ label: '🚴‍♂️ Велоспорт', value: 9 },
-		{ label: '🏇 Коні', value: 10 },
-	]
-
-	const optionsTime = [
-		{ label: 'На 1 годину', value: 60 },
-		{ label: 'На 2 години', value: 120 },
-		{ label: 'На 3 години', value: 180 },
-		{ label: 'На 4 години', value: 240 },
-		{ label: 'На 5 годин', value: 300 },
-		{ label: 'На 6 годин', value: 360 },
-		{ label: 'На 7 годин', value: 420 },
-		{ label: 'На 8 годин', value: 480 },
-		{ label: 'На 9 годин', value: 540 },
-		{ label: 'На 10 годин', value: 600 },
-		{ label: 'На 11 годин', value: 660 },
-		{ label: 'На 12 годин', value: 720 },
-	]
-
 	const optionsBusinessStatus = [
 		{ label: 'Всі статуси', value: 'all' },
 		{ label: '✅ Відкриті', value: 'OPERATIONAL' },
@@ -101,6 +73,47 @@ const Fields = () => {
 		{ label: '💰 Ціна: висока-низька', value: 'desc' },
 		{ label: '💸 Ціна: низька-висока', value: 'asc' },
 	]
+
+	useEffect(() => {
+		const storedCity = sessionStorage.getItem('userCity')
+
+		if (storedCity) {
+			setCity(storedCity)
+		} else {
+			if (navigator.geolocation) {
+				navigator.geolocation.getCurrentPosition(
+					async position => {
+						const { latitude, longitude } = position.coords
+						try {
+							const res = await fetch(
+								`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${
+									import.meta.env.VITE_GOOGLE_API_KEY
+								}&language=uk`
+							)
+							const data = await res.json()
+							const cityComponent = data.results[0]?.address_components.find(
+								c => c.types.includes('locality')
+							)
+							const detectedCity = cityComponent?.long_name
+
+							if (
+								detectedCity &&
+								optionsCities.find(option => option.value === detectedCity)
+							) {
+								sessionStorage.setItem('userCity', detectedCity)
+								setCity(detectedCity)
+							}
+						} catch (error) {
+							console.error('Помилка визначення міста:', error)
+						}
+					},
+					error => {
+						console.warn('Геолокацію відхилено або помилка:', error)
+					}
+				)
+			}
+		}
+	}, [])
 
 	useEffect(() => {
 		const fetchFields = async () => {
@@ -206,14 +219,15 @@ const Fields = () => {
 					</div>
 				</div>
 				<div className='flex items-center h-[max-content] gap-4 mt-4 mb-4'>
-					<h2 className='text-3xl font-semibold'>
-						Клуби в місті {city}
-					</h2>
+					<h2 className='text-3xl font-semibold'>Клуби в місті {city}</h2>
 					<DropDown
 						options={optionsCities}
 						placeholder={city}
 						width='20rem'
-						onChange={option => setCity(option.value)}
+						onChange={option => {
+							sessionStorage.setItem('userCity', option.value)
+							setCity(option.value)
+						}}
 					/>
 				</div>
 				<div className='relative w-full'>
