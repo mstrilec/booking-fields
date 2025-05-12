@@ -142,25 +142,33 @@ const Fields = () => {
 		try {
 			setIsLoadingMore(true)
 
-			await new Promise(resolve => setTimeout(resolve, 2000))
+			await new Promise(resolve => setTimeout(resolve, 5000))
 
-			const moreFieldsData = await getNearbyFields(city, nextPageToken)
+			const encodedToken = encodeURIComponent(nextPageToken)
+
+			console.log('Робимо запит з закодованим токеном')
+
+			const moreFieldsData = await getNearbyFields(city, encodedToken)
 
 			console.log('Received moreFieldsData: ', moreFieldsData)
-			console.log('Received nextPageToken: ', moreFieldsData.nextPageToken)
 
 			if (moreFieldsData.fields && moreFieldsData.fields.length > 0) {
 				setFields(prev => [...prev, ...moreFieldsData.fields])
 				setNextPageToken(moreFieldsData.nextPageToken || null)
 			} else {
-				console.log('No data received, retrying...')
-				await new Promise(resolve => setTimeout(resolve, 2000))
-				const retryData = await getNearbyFields(city, nextPageToken)
-				if (retryData.fields && retryData.fields.length > 0) {
-					setFields(prev => [...prev, ...retryData.fields])
-					setNextPageToken(retryData.nextPageToken || null)
-				} else {
-					setNextPageToken(null)
+				console.log(
+					'Немає даних, спробуємо перезберегти токен і спробувати пізніше'
+				)
+
+				try {
+					console.log('Повторно завантажуємо початкові поля')
+					const initialFieldsData = await getNearbyFields(city)
+					if (initialFieldsData.fields && initialFieldsData.fields.length > 0) {
+						setFields(initialFieldsData.fields)
+						setNextPageToken(initialFieldsData.nextPageToken || null)
+					}
+				} catch (innerErr) {
+					console.error('Помилка при перезавантаженні полів:', innerErr)
 				}
 			}
 		} catch (err) {

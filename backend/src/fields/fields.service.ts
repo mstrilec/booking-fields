@@ -38,17 +38,38 @@ export class FieldsService {
 
     console.log('Options: ', options);
 
-    const url = pageToken
-      ? `https://maps.googleapis.com/maps/api/place/nearbysearch/json?pageToken=${pageToken}&key=${key}`
-      : `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location}&radius=${radius}&type=${type}&key=${key}`;
+    let url;
 
-    const response: AxiosResponse<GoogleNearbySearchResponse> =
-      await this.httpService.axiosRef.get(url);
+    if (pageToken) {
+      url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?pagetoken=${pageToken}&key=${key}`;
 
-    return {
-      fields: response.data.results,
-      nextPageToken: response.data.next_page_token || null,
-    };
+      url += `&cacheBuster=${Date.now()}`;
+    } else {
+      url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location}&radius=${radius}&type=${type}&key=${key}`;
+    }
+
+    console.log('Запит до Google Places API:', url);
+
+    if (pageToken) {
+      console.log('Очікуємо 3 секунди перед запитом з pageToken...');
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    }
+
+    try {
+      const response: AxiosResponse<GoogleNearbySearchResponse> =
+        await this.httpService.axiosRef.get(url);
+
+      console.log('Google Places API status:', response.data.status);
+      console.log('Results count:', response.data.results?.length || 0);
+
+      return {
+        fields: response.data.results,
+        nextPageToken: response.data.next_page_token || null,
+      };
+    } catch (error) {
+      console.error('Error fetching from Google Places API:', error);
+      throw error;
+    }
   }
 
   async getFieldByPlaceId(placeId: string): Promise<FieldDetails> {

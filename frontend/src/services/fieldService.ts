@@ -4,10 +4,12 @@ const API_URL = 'http://localhost:5000'
 
 export const getNearbyFields = async (city?: string, pageToken?: string) => {
 	try {
-		const params: { city?: string; pageToken?: string } = {}
+		const params: { city?: string; pageToken?: string; timestamp?: number } = {}
 
 		if (city) params.city = city
 		if (pageToken) params.pageToken = pageToken
+
+		params.timestamp = Date.now()
 
 		console.log('Sending params to backend:', params)
 
