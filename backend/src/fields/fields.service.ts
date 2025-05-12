@@ -25,16 +25,30 @@ export class FieldsService {
 
   async getNearbyFields(
     options: FindNearbyFieldsOptions = {},
-  ): Promise<GooglePlacesResult[]> {
-    const { city = City.Kyiv, radius = 5000, type = 'stadium' } = options;
+  ): Promise<{ fields: GooglePlacesResult[]; nextPageToken?: string | null }> {
+    const {
+      city = City.Kyiv,
+      radius = 10000,
+      type = 'stadium',
+      pageToken,
+    } = options;
 
     const location = CITY_COORDINATES[city];
     const key = process.env.GOOGLE_API_KEY;
-    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location}&radius=${radius}&type=${type}&key=${key}`;
+
+    console.log('Options: ', options);
+
+    const url = pageToken
+      ? `https://maps.googleapis.com/maps/api/place/nearbysearch/json?pageToken=${pageToken}&key=${key}`
+      : `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location}&radius=${radius}&type=${type}&key=${key}`;
 
     const response: AxiosResponse<GoogleNearbySearchResponse> =
       await this.httpService.axiosRef.get(url);
-    return response.data.results;
+
+    return {
+      fields: response.data.results,
+      nextPageToken: response.data.next_page_token || null,
+    };
   }
 
   async getFieldByPlaceId(placeId: string): Promise<FieldDetails> {
@@ -136,7 +150,7 @@ export class FieldsService {
   async syncNearbyFields(): Promise<void> {
     const fieldsFromApi = await this.getNearbyFields();
 
-    for (const apiField of fieldsFromApi) {
+    for (const apiField of fieldsFromApi.fields) {
       const exists = await this.fieldsRepo.findOne({
         where: { placeId: apiField.place_id },
       });

@@ -21,8 +21,8 @@ const Fields = () => {
 	const [searchQuery, setSearchQuery] = useState('')
 	const [city, setCity] = useState<string>('Київ')
 	const storedCity = sessionStorage.getItem('userCity')
-
-	console.log(fields)
+	const [nextPageToken, setNextPageToken] = useState<string | null>(null)
+	const [isLoadingMore, setIsLoadingMore] = useState(false)
 
 	const optionsCities = [
 		{ label: 'Київ', value: 'Київ' },
@@ -74,6 +74,8 @@ const Fields = () => {
 		{ label: '💸 Ціна: низька-висока', value: 'asc' },
 	]
 
+	console.log(fields)
+
 	useEffect(() => {
 		const storedCity = sessionStorage.getItem('userCity')
 
@@ -120,7 +122,8 @@ const Fields = () => {
 			try {
 				setLoading(true)
 				const fieldsData = await getNearbyFields(city)
-				setFields(fieldsData)
+				setFields(fieldsData.fields)
+				setNextPageToken(fieldsData.nextPageToken || null)
 				setError(null)
 			} catch (err) {
 				setError('Не вдалося завантажити дані про клуби')
@@ -132,6 +135,40 @@ const Fields = () => {
 
 		fetchFields()
 	}, [city])
+
+	const loadMoreFields = async () => {
+		if (!nextPageToken) return
+		console.log('Current nextPageToken: ', nextPageToken)
+		try {
+			setIsLoadingMore(true)
+
+			await new Promise(resolve => setTimeout(resolve, 2000))
+
+			const moreFieldsData = await getNearbyFields(city, nextPageToken)
+
+			console.log('Received moreFieldsData: ', moreFieldsData)
+			console.log('Received nextPageToken: ', moreFieldsData.nextPageToken)
+
+			if (moreFieldsData.fields && moreFieldsData.fields.length > 0) {
+				setFields(prev => [...prev, ...moreFieldsData.fields])
+				setNextPageToken(moreFieldsData.nextPageToken || null)
+			} else {
+				console.log('No data received, retrying...')
+				await new Promise(resolve => setTimeout(resolve, 2000))
+				const retryData = await getNearbyFields(city, nextPageToken)
+				if (retryData.fields && retryData.fields.length > 0) {
+					setFields(prev => [...prev, ...retryData.fields])
+					setNextPageToken(retryData.nextPageToken || null)
+				} else {
+					setNextPageToken(null)
+				}
+			}
+		} catch (err) {
+			console.error('Не вдалося завантажити більше полів:', err)
+		} finally {
+			setIsLoadingMore(false)
+		}
+	}
 
 	useEffect(() => {
 		if (!fields.length) return
@@ -179,9 +216,6 @@ const Fields = () => {
 
 		setFilteredFields(result)
 	}, [fields, businessStatus, ratingSort, reviewsSort, priceSort, searchQuery])
-
-	console.log('sport: ', sport)
-	console.log('duration: ', duration)
 
 	if (loading) return <div className='loading'>Завантаження...</div>
 	if (error) return <div className='error'>{error}</div>
@@ -259,6 +293,10 @@ const Fields = () => {
 									}&key=${import.meta.env.VITE_GOOGLE_API_KEY}`}
 									alt={field.name}
 									className='w-full h-48 object-cover'
+									referrerPolicy='no-referrer'
+									onError={e => {
+										e.currentTarget.src = '/fallback-image.jpg'
+									}}
 								/>
 							) : (
 								<div className='w-full h-48 flex items-center justify-center bg-gray-100'>
@@ -296,6 +334,17 @@ const Fields = () => {
 						</div>
 					))}
 				</div>
+				{nextPageToken && (
+					<div className='mt-6 flex justify-center'>
+						<button
+							className='bg-[#1171f5] text-white rounded-xl py-2 px-6 text-lg font-semibold hover:bg-[#0e5ed1] transition duration-300'
+							onClick={loadMoreFields}
+							disabled={isLoadingMore}
+						>
+							{isLoadingMore ? 'Завантаження...' : 'Завантажити більше'}
+						</button>
+					</div>
+				)}
 			</div>
 			<div
 				style={{ position: 'sticky', top: '10%', zIndex: 10 }}

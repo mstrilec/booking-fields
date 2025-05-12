@@ -29,7 +29,8 @@ export class FieldsController {
   getNearbyFields(
     @Query('city') city?: City,
     @Query('radius') radius?: number,
-  ): Promise<GooglePlacesResult[]> {
+    @Query('pageToken') pageToken?: string,
+  ): Promise<{ fields: GooglePlacesResult[]; nextPageToken?: string | null }> {
     const options: FindNearbyFieldsOptions = {};
 
     if (city) {
@@ -38,6 +39,10 @@ export class FieldsController {
 
     if (radius) {
       options.radius = radius;
+    }
+
+    if (pageToken) {
+      options.pageToken = pageToken;
     }
 
     return this.fieldService.getNearbyFields(options);

@@ -29,6 +29,7 @@ export interface GooglePlacesResult {
 export interface GoogleNearbySearchResponse {
   status: string;
   results: GooglePlacesResult[];
+  next_page_token?: string;
 }
 
 export interface GooglePlaceDetailsResponse {
@@ -77,4 +78,5 @@ export interface FindNearbyFieldsOptions {
   city?: City;
   radius?: number;
   type?: string;
+  pageToken?: string;
 }
