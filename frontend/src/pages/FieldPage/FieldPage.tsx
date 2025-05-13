@@ -138,6 +138,10 @@ const FieldPage = () => {
 							}&key=${import.meta.env.VITE_GOOGLE_API_KEY}`}
 							alt={field.name}
 							className='w-full h-64 object-cover rounded-xl mb-6'
+							referrerPolicy='no-referrer'
+							onError={e => {
+								e.currentTarget.src = '/fallback-image.jpg'
+							}}
 						/>
 					) : (
 						<div className='w-full h-64 flex items-center justify-center bg-gray-200 rounded-xl mb-6'>

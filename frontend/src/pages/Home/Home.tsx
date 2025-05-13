@@ -22,7 +22,8 @@ const Home = () => {
 		const fetchFields = async () => {
 			try {
 				const data = await getNearbyFields()
-				setFields(data.slice(0, 4))
+				const fields = data.fields
+				setFields(fields.slice(0, 4))
 			} catch (error) {
 				console.error('Не вдалося завантажити поля:', error)
 			}

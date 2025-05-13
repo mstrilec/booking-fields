@@ -1,6 +1,7 @@
-import { Search } from 'lucide-react'
+import { Loader2, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import { Breadcrumbs } from '../../components/Breadcrumbs/Breadcrumbs'
 import DropDown from '../../components/DropDown/DropDown'
 import Map from '../../components/Map/Map'
@@ -21,8 +22,8 @@ const Fields = () => {
 	const [searchQuery, setSearchQuery] = useState('')
 	const [city, setCity] = useState<string>('Київ')
 	const storedCity = sessionStorage.getItem('userCity')
-
-	console.log(fields)
+	const [nextPageToken, setNextPageToken] = useState<string | null>(null)
+	const [isLoadingMore, setIsLoadingMore] = useState(false)
 
 	const optionsCities = [
 		{ label: 'Київ', value: 'Київ' },
@@ -74,6 +75,8 @@ const Fields = () => {
 		{ label: '💸 Ціна: низька-висока', value: 'asc' },
 	]
 
+	console.log(fields)
+
 	useEffect(() => {
 		const storedCity = sessionStorage.getItem('userCity')
 
@@ -120,7 +123,8 @@ const Fields = () => {
 			try {
 				setLoading(true)
 				const fieldsData = await getNearbyFields(city)
-				setFields(fieldsData)
+				setFields(fieldsData.fields)
+				setNextPageToken(fieldsData.nextPageToken || null)
 				setError(null)
 			} catch (err) {
 				setError('Не вдалося завантажити дані про клуби')
@@ -132,6 +136,51 @@ const Fields = () => {
 
 		fetchFields()
 	}, [city])
+
+	const loadMoreFields = async () => {
+		if (!nextPageToken) return
+		console.log('Current nextPageToken: ', nextPageToken)
+		try {
+			setIsLoadingMore(true)
+			toast.info('Завантаження додаткових полів...')
+
+			const encodedToken = encodeURIComponent(nextPageToken)
+
+			console.log('Робимо запит з закодованим токеном')
+
+			const moreFieldsData = await getNearbyFields(city, encodedToken)
+
+			console.log('Received moreFieldsData: ', moreFieldsData)
+
+			if (moreFieldsData.fields && moreFieldsData.fields.length > 0) {
+				setFields(prev => [...prev, ...moreFieldsData.fields])
+				setNextPageToken(moreFieldsData.nextPageToken || null)
+				toast.success('Додаткові поля завантажено')
+			} else {
+				toast.info('Немає даних, спробувати пізніше')
+				console.log(
+					'Немає даних, спробуємо перезберегти токен і спробувати пізніше'
+				)
+
+				try {
+					console.log('Повторно завантажуємо початкові поля')
+					const initialFieldsData = await getNearbyFields(city)
+					if (initialFieldsData.fields && initialFieldsData.fields.length > 0) {
+						setFields(initialFieldsData.fields)
+						setNextPageToken(initialFieldsData.nextPageToken || null)
+					}
+				} catch (innerErr) {
+					toast.error('Помилка при перезавантаженні полів')
+					console.error('Помилка при перезавантаженні полів:', innerErr)
+				}
+			}
+		} catch (err) {
+			toast.error('Не вдалося завантажити більше полів')
+			console.error('Не вдалося завантажити більше полів:', err)
+		} finally {
+			setIsLoadingMore(false)
+		}
+	}
 
 	useEffect(() => {
 		if (!fields.length) return
@@ -179,9 +228,6 @@ const Fields = () => {
 
 		setFilteredFields(result)
 	}, [fields, businessStatus, ratingSort, reviewsSort, priceSort, searchQuery])
-
-	console.log('sport: ', sport)
-	console.log('duration: ', duration)
 
 	if (loading) return <div className='loading'>Завантаження...</div>
 	if (error) return <div className='error'>{error}</div>
@@ -259,6 +305,10 @@ const Fields = () => {
 									}&key=${import.meta.env.VITE_GOOGLE_API_KEY}`}
 									alt={field.name}
 									className='w-full h-48 object-cover'
+									referrerPolicy='no-referrer'
+									onError={e => {
+										e.currentTarget.src = '/fallback-image.jpg'
+									}}
 								/>
 							) : (
 								<div className='w-full h-48 flex items-center justify-center bg-gray-100'>
@@ -296,6 +346,20 @@ const Fields = () => {
 						</div>
 					))}
 				</div>
+				{nextPageToken && (
+					<div className='mt-6 flex justify-center'>
+						{!isLoadingMore ? (
+							<button
+								className='bg-[#1171f5] text-white rounded-xl py-2 px-6 text-lg font-semibold hover:bg-[#0e5ed1] transition duration-300'
+								onClick={loadMoreFields}
+							>
+								Завантажити більше
+							</button>
+						) : (
+							<Loader2 className='animate-spin text-[#1171f5]' size={48} />
+						)}
+					</div>
+				)}
 			</div>
 			<div
 				style={{ position: 'sticky', top: '10%', zIndex: 10 }}

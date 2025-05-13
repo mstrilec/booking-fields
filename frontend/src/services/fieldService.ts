@@ -2,10 +2,19 @@ import axios from 'axios'
 
 const API_URL = 'http://localhost:5000'
 
-export const getNearbyFields = async city => {
+export const getNearbyFields = async (city?: string, pageToken?: string) => {
 	try {
-		const params = city ? { city } : {}
+		const params: { city?: string; pageToken?: string; timestamp?: number } = {}
+
+		if (city) params.city = city
+		if (pageToken) params.pageToken = pageToken
+
+		params.timestamp = Date.now()
+
+		console.log('Sending params to backend:', params)
+
 		const response = await axios.get(`${API_URL}/fields`, { params })
+		console.log('Backend response:', response.data)
 		return response.data
 	} catch (error) {
 		console.error('Error fetching nearby fields:', error)
@@ -13,7 +22,7 @@ export const getNearbyFields = async city => {
 	}
 }
 
-export const getFieldByPlaceId = async placeId => {
+export const getFieldByPlaceId = async (placeId: string) => {
 	try {
 		const response = await axios.get(`${API_URL}/fields/${placeId}`)
 		return response.data
@@ -23,7 +32,7 @@ export const getFieldByPlaceId = async placeId => {
 	}
 }
 
-export const createField = async placeId => {
+export const createField = async (placeId: string) => {
 	try {
 		const response = await axios.post(`${API_URL}/fields/create`, { placeId })
 		return response.data
@@ -33,7 +42,11 @@ export const createField = async placeId => {
 	}
 }
 
-export const updateField = async (placeId, updateData, token) => {
+export const updateField = async (
+	placeId: string,
+	updateData: any,
+	token: string
+) => {
 	try {
 		const response = await axios.patch(
 			`${API_URL}/fields/${placeId}`,
@@ -51,7 +64,7 @@ export const updateField = async (placeId, updateData, token) => {
 	}
 }
 
-export const syncNearbyFields = async token => {
+export const syncNearbyFields = async (token: string) => {
 	try {
 		const response = await axios.post(
 			`${API_URL}/fields/sync`,
