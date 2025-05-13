@@ -1,6 +1,7 @@
-import { Search } from 'lucide-react'
+import { Loader2, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import { Breadcrumbs } from '../../components/Breadcrumbs/Breadcrumbs'
 import DropDown from '../../components/DropDown/DropDown'
 import Map from '../../components/Map/Map'
@@ -141,8 +142,7 @@ const Fields = () => {
 		console.log('Current nextPageToken: ', nextPageToken)
 		try {
 			setIsLoadingMore(true)
-
-			await new Promise(resolve => setTimeout(resolve, 5000))
+			toast.info('Завантаження додаткових полів...')
 
 			const encodedToken = encodeURIComponent(nextPageToken)
 
@@ -155,7 +155,9 @@ const Fields = () => {
 			if (moreFieldsData.fields && moreFieldsData.fields.length > 0) {
 				setFields(prev => [...prev, ...moreFieldsData.fields])
 				setNextPageToken(moreFieldsData.nextPageToken || null)
+				toast.success('Додаткові поля завантажено')
 			} else {
+				toast.info('Немає даних, спробувати пізніше')
 				console.log(
 					'Немає даних, спробуємо перезберегти токен і спробувати пізніше'
 				)
@@ -168,10 +170,12 @@ const Fields = () => {
 						setNextPageToken(initialFieldsData.nextPageToken || null)
 					}
 				} catch (innerErr) {
+					toast.error('Помилка при перезавантаженні полів')
 					console.error('Помилка при перезавантаженні полів:', innerErr)
 				}
 			}
 		} catch (err) {
+			toast.error('Не вдалося завантажити більше полів')
 			console.error('Не вдалося завантажити більше полів:', err)
 		} finally {
 			setIsLoadingMore(false)
@@ -344,13 +348,16 @@ const Fields = () => {
 				</div>
 				{nextPageToken && (
 					<div className='mt-6 flex justify-center'>
-						<button
-							className='bg-[#1171f5] text-white rounded-xl py-2 px-6 text-lg font-semibold hover:bg-[#0e5ed1] transition duration-300'
-							onClick={loadMoreFields}
-							disabled={isLoadingMore}
-						>
-							{isLoadingMore ? 'Завантаження...' : 'Завантажити більше'}
-						</button>
+						{!isLoadingMore ? (
+							<button
+								className='bg-[#1171f5] text-white rounded-xl py-2 px-6 text-lg font-semibold hover:bg-[#0e5ed1] transition duration-300'
+								onClick={loadMoreFields}
+							>
+								Завантажити більше
+							</button>
+						) : (
+							<Loader2 className='animate-spin text-[#1171f5]' size={48} />
+						)}
 					</div>
 				)}
 			</div>

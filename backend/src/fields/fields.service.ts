@@ -51,8 +51,8 @@ export class FieldsService {
     console.log('Запит до Google Places API:', url);
 
     if (pageToken) {
-      console.log('Очікуємо 3 секунди перед запитом з pageToken...');
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      console.log('Очікуємо 2 секунди перед запитом з pageToken...');
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
 
     try {
