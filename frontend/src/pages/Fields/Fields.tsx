@@ -1,19 +1,24 @@
 import { Loader2, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { Breadcrumbs } from '../../components/Breadcrumbs/Breadcrumbs'
 import DropDown from '../../components/DropDown/DropDown'
+import FieldCard from '../../components/FieldCard/FieldCard'
 import Map from '../../components/Map/Map'
 import { getNearbyFields } from '../../services/fieldService'
+import {
+	optionsBusinessStatus,
+	optionsCities,
+	optionsPrice,
+	optionsRating,
+	optionsReviews,
+} from '../../utils/constants'
 
 const Fields = () => {
 	const [fields, setFields] = useState([])
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState(null)
-	const [duration, setDuration] = useState<number>(60)
-	const [sport, setSport] = useState<number>(0)
-	const navigate = useNavigate()
 	const [businessStatus, setBusinessStatus] = useState<string>('all')
 	const [ratingSort, setRatingSort] = useState<string>('none')
 	const [reviewsSort, setReviewsSort] = useState<string>('none')
@@ -21,61 +26,50 @@ const Fields = () => {
 	const [filteredFields, setFilteredFields] = useState([])
 	const [searchQuery, setSearchQuery] = useState('')
 	const [city, setCity] = useState<string>('Київ')
-	const storedCity = sessionStorage.getItem('userCity')
 	const [nextPageToken, setNextPageToken] = useState<string | null>(null)
 	const [isLoadingMore, setIsLoadingMore] = useState(false)
+	const [searchParams] = useSearchParams()
 
-	const optionsCities = [
-		{ label: 'Київ', value: 'Київ' },
-		{ label: 'Львів', value: 'Львів' },
-		{ label: 'Харків', value: 'Харків' },
-		{ label: 'Одеса', value: 'Одеса' },
-		{ label: 'Дніпро', value: 'Дніпро' },
-		{ label: 'Запоріжжя', value: 'Запоріжжя' },
-		{ label: 'Вінниця', value: 'Вінниця' },
-		{ label: 'Чернівці', value: 'Чернівці' },
-		{ label: 'Івано-Франківськ', value: 'Івано-Франківськ' },
-		{ label: 'Тернопіль', value: 'Тернопіль' },
-		{ label: 'Луцьк', value: 'Луцьк' },
-		{ label: 'Рівне', value: 'Рівне' },
-		{ label: 'Житомир', value: 'Житомир' },
-		{ label: 'Хмельницький', value: 'Хмельницький' },
-		{ label: 'Черкаси', value: 'Черкаси' },
-		{ label: 'Полтава', value: 'Полтава' },
-		{ label: 'Суми', value: 'Суми' },
-		{ label: 'Чернігів', value: 'Чернігів' },
-		{ label: 'Миколаїв', value: 'Миколаїв' },
-		{ label: 'Херсон', value: 'Херсон' },
-		{ label: 'Кропивницький', value: 'Кропивницький' },
-		{ label: 'Ужгород', value: 'Ужгород' },
-	]
+	const loadMoreFields = async () => {
+		if (!nextPageToken) return
+		try {
+			setIsLoadingMore(true)
+			toast.info('Завантаження додаткових полів...')
 
-	const optionsBusinessStatus = [
-		{ label: 'Всі статуси', value: 'all' },
-		{ label: '✅ Відкриті', value: 'OPERATIONAL' },
-		{ label: '⏱️ Тимчасово закриті', value: 'CLOSED_TEMPORARILY' },
-		{ label: '❌ Постійно закриті', value: 'CLOSED_PERMANENTLY' },
-	]
+			const encodedToken = encodeURIComponent(nextPageToken)
+			const moreFieldsData = await getNearbyFields(city, encodedToken)
 
-	const optionsRating = [
-		{ label: 'Рейтинг', value: 'none' },
-		{ label: '⭐ Рейтинг: високий-низький', value: 'desc' },
-		{ label: '⭐ Рейтинг: низький-високий', value: 'asc' },
-	]
+			if (moreFieldsData.fields && moreFieldsData.fields.length > 0) {
+				setFields(prev => [...prev, ...moreFieldsData.fields])
+				setNextPageToken(moreFieldsData.nextPageToken || null)
 
-	const optionsReviews = [
-		{ label: 'Кількість відгуків', value: 'none' },
-		{ label: '👥 Відгуки: багато-мало', value: 'desc' },
-		{ label: '👤 Відгуки: мало-багато', value: 'asc' },
-	]
+				toast.success('Додаткові поля завантажено')
+			} else {
+				toast.info('Немає даних, спробувати пізніше')
+				try {
+					const initialFieldsData = await getNearbyFields(city)
 
-	const optionsPrice = [
-		{ label: 'Ціна', value: 'none' },
-		{ label: '💰 Ціна: висока-низька', value: 'desc' },
-		{ label: '💸 Ціна: низька-висока', value: 'asc' },
-	]
+					if (initialFieldsData.fields && initialFieldsData.fields.length > 0) {
+						setFields(initialFieldsData.fields)
+						setNextPageToken(initialFieldsData.nextPageToken || null)
+					}
+				} catch (error) {
+					toast.error('Помилка при перезавантаженні полів')
+				}
+			}
+		} catch (error) {
+			toast.error('Не вдалося завантажити більше полів')
+		} finally {
+			setIsLoadingMore(false)
+		}
+	}
 
-	console.log(fields)
+	useEffect(() => {
+		const search = searchParams.get('search')
+		if (search) {
+			setSearchQuery(search)
+		}
+	}, [searchParams])
 
 	useEffect(() => {
 		const storedCity = sessionStorage.getItem('userCity')
@@ -84,36 +78,31 @@ const Fields = () => {
 			setCity(storedCity)
 		} else {
 			if (navigator.geolocation) {
-				navigator.geolocation.getCurrentPosition(
-					async position => {
-						const { latitude, longitude } = position.coords
-						try {
-							const res = await fetch(
-								`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${
-									import.meta.env.VITE_GOOGLE_API_KEY
-								}&language=uk`
-							)
-							const data = await res.json()
-							const cityComponent = data.results[0]?.address_components.find(
-								c => c.types.includes('locality')
-							)
-							const detectedCity = cityComponent?.long_name
+				navigator.geolocation.getCurrentPosition(async position => {
+					const { latitude, longitude } = position.coords
+					try {
+						const res = await fetch(
+							`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${
+								import.meta.env.VITE_GOOGLE_API_KEY
+							}&language=uk`
+						)
+						const data = await res.json()
+						const cityComponent = data.results[0]?.address_components.find(c =>
+							c.types.includes('locality')
+						)
+						const detectedCity = cityComponent?.long_name
 
-							if (
-								detectedCity &&
-								optionsCities.find(option => option.value === detectedCity)
-							) {
-								sessionStorage.setItem('userCity', detectedCity)
-								setCity(detectedCity)
-							}
-						} catch (error) {
-							console.error('Помилка визначення міста:', error)
+						if (
+							detectedCity &&
+							optionsCities.find(option => option.value === detectedCity)
+						) {
+							sessionStorage.setItem('userCity', detectedCity)
+							setCity(detectedCity)
 						}
-					},
-					error => {
-						console.warn('Геолокацію відхилено або помилка:', error)
+					} catch (error) {
+						throw new Error('Не вдалося отримати дані про місто')
 					}
-				)
+				})
 			}
 		}
 	}, [])
@@ -126,9 +115,8 @@ const Fields = () => {
 				setFields(fieldsData.fields)
 				setNextPageToken(fieldsData.nextPageToken || null)
 				setError(null)
-			} catch (err) {
+			} catch (error) {
 				setError('Не вдалося завантажити дані про клуби')
-				console.error(err)
 			} finally {
 				setLoading(false)
 			}
@@ -136,51 +124,6 @@ const Fields = () => {
 
 		fetchFields()
 	}, [city])
-
-	const loadMoreFields = async () => {
-		if (!nextPageToken) return
-		console.log('Current nextPageToken: ', nextPageToken)
-		try {
-			setIsLoadingMore(true)
-			toast.info('Завантаження додаткових полів...')
-
-			const encodedToken = encodeURIComponent(nextPageToken)
-
-			console.log('Робимо запит з закодованим токеном')
-
-			const moreFieldsData = await getNearbyFields(city, encodedToken)
-
-			console.log('Received moreFieldsData: ', moreFieldsData)
-
-			if (moreFieldsData.fields && moreFieldsData.fields.length > 0) {
-				setFields(prev => [...prev, ...moreFieldsData.fields])
-				setNextPageToken(moreFieldsData.nextPageToken || null)
-				toast.success('Додаткові поля завантажено')
-			} else {
-				toast.info('Немає даних, спробувати пізніше')
-				console.log(
-					'Немає даних, спробуємо перезберегти токен і спробувати пізніше'
-				)
-
-				try {
-					console.log('Повторно завантажуємо початкові поля')
-					const initialFieldsData = await getNearbyFields(city)
-					if (initialFieldsData.fields && initialFieldsData.fields.length > 0) {
-						setFields(initialFieldsData.fields)
-						setNextPageToken(initialFieldsData.nextPageToken || null)
-					}
-				} catch (innerErr) {
-					toast.error('Помилка при перезавантаженні полів')
-					console.error('Помилка при перезавантаженні полів:', innerErr)
-				}
-			}
-		} catch (err) {
-			toast.error('Не вдалося завантажити більше полів')
-			console.error('Не вдалося завантажити більше полів:', err)
-		} finally {
-			setIsLoadingMore(false)
-		}
-	}
 
 	useEffect(() => {
 		if (!fields.length) return
@@ -229,7 +172,8 @@ const Fields = () => {
 		setFilteredFields(result)
 	}, [fields, businessStatus, ratingSort, reviewsSort, priceSort, searchQuery])
 
-	if (loading) return <div className='loading'>Завантаження...</div>
+	if (loading)
+		return <Loader2 className='animate-spin text-[#1171f5]' size={48} />
 	if (error) return <div className='error'>{error}</div>
 
 	return (
@@ -294,56 +238,7 @@ const Fields = () => {
 				<hr className='mt-4 border-gray-400' />
 				<div className='grid grid-cols-1 md:grid-cols-2 gap-6 mt-6'>
 					{filteredFields.map((field, index) => (
-						<div
-							key={index}
-							className='bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition duration-300 cursor-pointer flex flex-col justify-between'
-						>
-							{field.photos && field.photos.length > 0 ? (
-								<img
-									src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${
-										field.photos[0].photo_reference
-									}&key=${import.meta.env.VITE_GOOGLE_API_KEY}`}
-									alt={field.name}
-									className='w-full h-48 object-cover'
-									referrerPolicy='no-referrer'
-									onError={e => {
-										e.currentTarget.src = '/fallback-image.jpg'
-									}}
-								/>
-							) : (
-								<div className='w-full h-48 flex items-center justify-center bg-gray-100'>
-									<img
-										src={field.icon}
-										alt={field.name}
-										className='w-16 h-16'
-									/>
-								</div>
-							)}
-
-							<div className='p-4 flex flex-col flex-grow'>
-								<h3 className='text-xl font-semibold text-[#162328] mb-1'>
-									{field.name}
-								</h3>
-								<p className='text-gray-500 text-sm mb-2'>{field.vicinity}</p>
-
-								<div className='flex items-center gap-2 mb-4'>
-									<span className='text-yellow-400 text-lg'>★</span>
-									<span className='text-gray-700'>
-										{field.rating ?? 'Немає оцінки'}
-									</span>
-									<span className='text-gray-400 text-sm'>
-										({field.user_ratings_total ?? 0})
-									</span>
-								</div>
-
-								<button
-									className='mt-auto bg-[#1171f5] text-white rounded-xl py-2 px-4 text-center font-semibold hover:bg-[#0e5ed1] transition duration-300 cursor-pointer'
-									onClick={() => navigate(`/field/${field.place_id}`)}
-								>
-									Забронювати
-								</button>
-							</div>
-						</div>
+						<FieldCard field={field} index={index} />
 					))}
 				</div>
 				{nextPageToken && (

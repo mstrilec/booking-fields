@@ -1,5 +1,6 @@
 import { setHours } from 'date-fns/setHours'
 import { setMinutes } from 'date-fns/setMinutes'
+import { Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import DatePicker from 'react-datepicker'
 import { Link, useParams } from 'react-router-dom'
@@ -10,6 +11,7 @@ import DropDown from '../../components/DropDown/DropDown'
 import { useAuth } from '../../context/AuthContext'
 import { createBooking } from '../../services/bookingService'
 import { createField, getFieldByPlaceId } from '../../services/fieldService'
+import { optionsTime } from '../../utils/constants'
 
 const FieldPage = () => {
 	const { placeId } = useParams()
@@ -21,22 +23,6 @@ const FieldPage = () => {
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const { user } = useAuth()
 	const [duration, setDuration] = useState<number>(60)
-	const [priceError, setPriceError] = useState('')
-
-	const optionsTime = [
-		{ label: 'На 1 годину', value: 60 },
-		{ label: 'На 2 години', value: 120 },
-		{ label: 'На 3 години', value: 180 },
-		{ label: 'На 4 години', value: 240 },
-		{ label: 'На 5 годин', value: 300 },
-		{ label: 'На 6 годин', value: 360 },
-		{ label: 'На 7 годин', value: 420 },
-		{ label: 'На 8 годин', value: 480 },
-		{ label: 'На 9 годин', value: 540 },
-		{ label: 'На 10 годин', value: 600 },
-		{ label: 'На 11 годин', value: 660 },
-		{ label: 'На 12 годин', value: 720 },
-	]
 
 	useEffect(() => {
 		const fetchField = async () => {
@@ -52,24 +38,32 @@ const FieldPage = () => {
 				setError(null)
 			} catch (err) {
 				setError('Не вдалося завантажити інформацію про поле')
-				console.error(err)
 			} finally {
 				setLoading(false)
 			}
 		}
 
 		fetchField()
+
+		const savedDate = sessionStorage.getItem('bookingDate')
+		const savedTime = sessionStorage.getItem('bookingTime')
+
+		if (savedDate) {
+			setStartDate(new Date(savedDate))
+		}
+
+		if (savedTime) {
+			setTime(new Date(savedTime))
+		}
 	}, [placeId])
 
 	const handleSubmit = async () => {
-		console.log('startDate:', startDate)
-		console.log('time:', time)
-		console.log('user:', user)
-		console.log('duration:', duration)
-		console.log('field:', field)
+		if (!user) {
+			toast.error('Для бронювання необхідно авторизуватися')
+			return
+		}
 
-		if (!startDate || !time || !user) {
-			console.log('Поля не заповнені')
+		if (!startDate || !time) {
 			toast.error('Будь ласка, заповніть усі поля')
 			return
 		}
@@ -83,20 +77,8 @@ const FieldPage = () => {
 				time.getHours(),
 				time.getMinutes()
 			)
-
 			const endTime = new Date(startTime.getTime() + duration * 60000)
-
-			console.log('Start field id:', placeId)
-
 			const fieldFromBD = await createField(placeId)
-
-			console.log('Field From BD:', fieldFromBD)
-
-			console.log('Створюємо бронювання з параметрами:', {
-				startTime,
-				endTime,
-				fieldId: fieldFromBD.id,
-			})
 
 			await createBooking({
 				startTime,
@@ -105,8 +87,10 @@ const FieldPage = () => {
 			})
 
 			toast.success('Бронювання успішно створено!')
+
+			sessionStorage.removeItem('bookingDate')
+			sessionStorage.removeItem('bookingTime')
 		} catch (error) {
-			console.error(error)
 			toast.error('Помилка при створенні бронювання')
 		} finally {
 			setIsSubmitting(false)
@@ -117,14 +101,13 @@ const FieldPage = () => {
 		try {
 			const updatedField = await getFieldByPlaceId(placeId)
 			setField(updatedField)
-		} catch (err) {
-			console.error('Не вдалося оновити поле після коментаря:', err)
+		} catch (error) {
+			toast.error('Не вдалося оновити коментарі')
 		}
 	}
 
-	console.log('field:', field)
-
-	if (loading) return <div className='loading'>Завантаження...</div>
+	if (loading)
+		return <Loader2 className='animate-spin text-[#1171f5]' size={48} />
 	if (error) return <div className='error'>{error}</div>
 
 	return (
@@ -182,44 +165,59 @@ const FieldPage = () => {
 
 				<div className='flex flex-col items-center justify-center gap-4 bg-[#1171f5] rounded-2xl p-6 h-96'>
 					<h3 className='text-2xl text-white font-semibold'>Бронювання</h3>
-					<div className='relative'>
-						<DatePicker
-							selected={startDate}
-							onChange={date => setStartDate(date)}
-							className='bg-white rounded-xl shadow-lg text-[#162328] px-4 py-3 w-full focus:outline-none'
-							dateFormat='dd/MM/yyyy'
-							minDate={new Date()}
-							placeholderText='Виберіть дату'
-						/>
-					</div>
-					<div className='relative'>
-						<DatePicker
-							selected={time}
-							onChange={date => setTime(date)}
-							showTimeSelect
-							showTimeSelectOnly
-							timeIntervals={30}
-							timeCaption='Час'
-							dateFormat='HH:mm'
-							placeholderText='Будь-який час'
-							className='bg-white rounded-xl shadow-lg text-[#162328] px-4 py-3 w-full focus:outline-none'
-							minTime={setHours(setMinutes(new Date(), 0), 8)}
-							maxTime={setHours(setMinutes(new Date(), 0), 22)}
-						/>
-					</div>
-					<DropDown
-						options={optionsTime}
-						placeholder='На 1 годину'
-						width='100%'
-						onChange={option => setDuration(option.value)}
-					/>
-					<button
-						className='bg-[#e5fc3a] text-[#1171f5] font-semibold px-5 py-2 rounded-lg hover:bg-[#bfd800] cursor-pointer transition duration-300 mt-4'
-						onClick={handleSubmit}
-						disabled={isSubmitting}
-					>
-						{isSubmitting ? 'Бронюємо...' : 'Оформити'}
-					</button>
+
+					{!user ? (
+						<div className='text-white text-center mb-2'>
+							<p>Для бронювання необхідно авторизуватися</p>
+							<Link
+								to='/login'
+								className='bg-[#e5fc3a] text-[#1171f5] font-semibold px-5 py-2 rounded-lg hover:bg-[#bfd800] cursor-pointer transition duration-300 mt-4 inline-block'
+							>
+								Увійти
+							</Link>
+						</div>
+					) : (
+						<>
+							<div className='relative'>
+								<DatePicker
+									selected={startDate}
+									onChange={date => setStartDate(date)}
+									className='bg-white rounded-xl shadow-lg text-[#162328] px-4 py-3 w-full focus:outline-none'
+									dateFormat='dd/MM/yyyy'
+									minDate={new Date()}
+									placeholderText='Виберіть дату'
+								/>
+							</div>
+							<div className='relative'>
+								<DatePicker
+									selected={time}
+									onChange={date => setTime(date)}
+									showTimeSelect
+									showTimeSelectOnly
+									timeIntervals={30}
+									timeCaption='Час'
+									dateFormat='HH:mm'
+									placeholderText='Будь-який час'
+									className='bg-white rounded-xl shadow-lg text-[#162328] px-4 py-3 w-full focus:outline-none'
+									minTime={setHours(setMinutes(new Date(), 0), 8)}
+									maxTime={setHours(setMinutes(new Date(), 0), 22)}
+								/>
+							</div>
+							<DropDown
+								options={optionsTime}
+								placeholder='На 1 годину'
+								width='100%'
+								onChange={option => setDuration(option.value)}
+							/>
+							<button
+								className='bg-[#e5fc3a] text-[#1171f5] font-semibold px-5 py-2 rounded-lg hover:bg-[#bfd800] cursor-pointer transition duration-300 mt-4'
+								onClick={handleSubmit}
+								disabled={isSubmitting}
+							>
+								{isSubmitting ? 'Бронюємо...' : 'Оформити'}
+							</button>
+						</>
+					)}
 				</div>
 			</div>
 			<div className='mt-6'>

@@ -1,10 +1,13 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
 import { Repository } from 'typeorm';
+import { DelayService } from '../delay/delay.service';
 import { UpdateFieldDto } from '../dto/update-field.dto';
 import { Field } from '../entities/field.entity';
+import { LoggerService } from '../logger/logger.service';
 import { City } from '../types/enums';
 import {
   FieldDetails,
@@ -19,56 +22,71 @@ import { CITY_COORDINATES } from '../types/variables';
 export class FieldsService {
   constructor(
     private readonly httpService: HttpService,
+    private readonly configService: ConfigService,
+    private readonly delayService: DelayService,
+    private readonly logger: LoggerService,
     @InjectRepository(Field)
     private fieldsRepo: Repository<Field>,
   ) {}
-
   async getNearbyFields(
     options: FindNearbyFieldsOptions = {},
   ): Promise<{ fields: GooglePlacesResult[]; nextPageToken?: string | null }> {
+    const baseGoogleUrl = this.configService.get<string>('GOOGLE_URL');
+    const defaultCityName = this.configService.get<string>(
+      'DEFAULT_CITY',
+      'Kyiv',
+    );
+    const defaultCity = Object.keys(City).includes(
+      defaultCityName as keyof typeof City,
+    )
+      ? City[defaultCityName as keyof typeof City]
+      : City.Kyiv;
+    const defaultRadius = this.configService.get<number>(
+      'DEFAULT_RADIUS',
+      10000,
+    );
+    const defaultType = this.configService.get<string>(
+      'DEFAULT_TYPE',
+      'stadium',
+    );
     const {
-      city = City.Kyiv,
-      radius = 10000,
-      type = 'stadium',
+      city = defaultCity,
+      radius = defaultRadius,
+      type = defaultType,
       pageToken,
     } = options;
 
+    this.logger.log('Options: ', JSON.stringify(options));
+
     const location = CITY_COORDINATES[city];
     const key = process.env.GOOGLE_API_KEY;
-
-    console.log('Options: ', options);
-
-    let url;
+    let url: string;
 
     if (pageToken) {
-      url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?pagetoken=${pageToken}&key=${key}`;
+      url = `${baseGoogleUrl}pagetoken=${pageToken}&key=${key}`;
 
       url += `&cacheBuster=${Date.now()}`;
     } else {
-      url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location}&radius=${radius}&type=${type}&key=${key}`;
+      url = `${baseGoogleUrl}location=${location}&radius=${radius}&type=${type}&key=${key}`;
     }
 
-    console.log('Запит до Google Places API:', url);
+    this.logger.log('Запит до Google Places API:', url);
 
     if (pageToken) {
-      console.log('Очікуємо 2 секунди перед запитом з pageToken...');
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await this.delayService.wait(2000);
     }
 
     try {
       const response: AxiosResponse<GoogleNearbySearchResponse> =
         await this.httpService.axiosRef.get(url);
 
-      console.log('Google Places API status:', response.data.status);
-      console.log('Results count:', response.data.results?.length || 0);
-
       return {
         fields: response.data.results,
         nextPageToken: response.data.next_page_token || null,
       };
-    } catch (error) {
-      console.error('Error fetching from Google Places API:', error);
-      throw error;
+    } catch {
+      this.logger.error('Error fetching data from Google Places API');
+      throw new Error('Failed to fetch data from Google Places API');
     }
   }
 
@@ -142,7 +160,7 @@ export class FieldsService {
 
       return await this.fieldsRepo.save(newField);
     } catch (error) {
-      console.error(`Error creating field with placeId ${placeId}:`, error);
+      this.logger.error(`Error creating field with placeId ${placeId}:`, error);
       throw new NotFoundException(
         'Could not create field from Google Places API',
       );

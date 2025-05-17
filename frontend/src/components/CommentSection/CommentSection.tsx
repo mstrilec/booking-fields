@@ -67,7 +67,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({
 			toast.success('Коментар додано успішно')
 			onCommentAdded()
 		} catch (error) {
-			console.error('Помилка при додаванні коментаря:', error)
 			toast.error('Не вдалося додати коментар')
 		} finally {
 			setIsSubmitting(false)
@@ -84,7 +83,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({
 			toast.success('Коментар видалено')
 			onCommentAdded()
 		} catch (error) {
-			console.error('Помилка при видаленні коментаря:', error)
 			toast.error('Не вдалося видалити коментар')
 		}
 	}

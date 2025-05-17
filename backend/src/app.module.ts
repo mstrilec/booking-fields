@@ -6,6 +6,8 @@ import { UsersModule } from './users/users.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { FieldsModule } from './fields/fields.module';
 import { CommentsModule } from './comments/comments.module';
+import { DelayModule } from './delay/delay.module';
+import { LoggerModule } from './logger/logger.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { CommentsModule } from './comments/comments.module';
     BookingsModule,
     FieldsModule,
     CommentsModule,
+    DelayModule,
+    LoggerModule,
   ],
   controllers: [],
   providers: [],

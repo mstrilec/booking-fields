@@ -34,7 +34,6 @@ const AdminFieldEditor: React.FC<AdminFieldEditorProps> = ({
 			)
 			toast.success('Поле оновлено успішно')
 		} catch (error) {
-			console.error(error)
 			toast.error('Не вдалося оновити поле')
 		}
 	}

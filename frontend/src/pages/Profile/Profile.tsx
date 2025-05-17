@@ -35,10 +35,8 @@ const Profile = () => {
 					data.map(async booking => {
 						try {
 							const fullField = await getFieldByPlaceId(booking.field.placeId)
-							console.log('Поле:', fullField)
 							return { ...booking, field: fullField }
 						} catch (err) {
-							console.error('Помилка при завантаженні поля:', err)
 							return booking
 						}
 					})
@@ -46,7 +44,7 @@ const Profile = () => {
 
 				setBookings(bookingsWithField)
 			} catch (err) {
-				console.error('Помилка при завантаженні бронювань:', err)
+				throw new Error('Не вдалося завантажити бронювання')
 			} finally {
 				setLoading(false)
 			}
@@ -64,7 +62,7 @@ const Profile = () => {
 				)
 			)
 		} catch (error) {
-			console.error('Помилка при оновленні статусу:', error)
+			throw new Error('Не вдалося оновити статус бронювання')
 		}
 	}
 
