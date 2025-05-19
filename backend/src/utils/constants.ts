@@ -1,0 +1,26 @@
+import { City } from '../types/enums';
+
+export const CITY_COORDINATES: Record<City, string> = {
+  [City.Kyiv]: '50.4501,30.5234',
+  [City.Lviv]: '49.8397,24.0297',
+  [City.Kharkiv]: '49.9935,36.2304',
+  [City.Odesa]: '46.4825,30.7233',
+  [City.Dnipro]: '48.4647,35.0462',
+  [City.Zaporizhzhia]: '47.8388,35.1396',
+  [City.Vinnytsia]: '49.2328,28.481',
+  [City.Chernivtsi]: '48.2915,25.9403',
+  [City.Ivano_Frankivsk]: '48.9226,24.7111',
+  [City.Ternopil]: '49.5535,25.5948',
+  [City.Lutsk]: '50.7472,25.3254',
+  [City.Rivne]: '50.6199,26.2516',
+  [City.Zhytomyr]: '50.2547,28.6587',
+  [City.Khmelnytskyi]: '49.4229,26.9871',
+  [City.Cherkasy]: '49.4444,32.0598',
+  [City.Poltava]: '49.5883,34.5514',
+  [City.Sumy]: '50.9077,34.7981',
+  [City.Chernihiv]: '51.4982,31.2893',
+  [City.Mykolaiv]: '46.975,31.9946',
+  [City.Kherson]: '46.6354,32.6169',
+  [City.Kropyvnytskyi]: '48.5079,32.2623',
+  [City.Uzhhorod]: '48.6219,22.2879',
+};

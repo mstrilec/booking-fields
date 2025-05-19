@@ -16,5 +16,6 @@ import { FieldsService } from './fields.service';
   ],
   controllers: [FieldsController],
   providers: [FieldsService],
+  exports: [FieldsService],
 })
 export class FieldsModule {}

@@ -56,7 +56,7 @@ export class FieldsService {
       pageToken,
     } = options;
 
-    this.logger.log('Options: ', JSON.stringify(options));
+    // this.logger.log('Options: ', JSON.stringify(options));
 
     const location = CITY_COORDINATES[city];
     const key = process.env.GOOGLE_API_KEY;
@@ -70,7 +70,7 @@ export class FieldsService {
       url = `${baseGoogleUrl}location=${location}&radius=${radius}&type=${type}&key=${key}`;
     }
 
-    this.logger.log('Запит до Google Places API:', url);
+    // this.logger.log('Запит до Google Places API:', url);
 
     if (pageToken) {
       await this.delayService.wait(2000);
@@ -187,22 +187,45 @@ export class FieldsService {
   }
 
   async syncNearbyFields(): Promise<void> {
-    const fieldsFromApi = await this.getNearbyFields();
+    const allCities = Object.values(City);
 
-    for (const apiField of fieldsFromApi.fields) {
-      const exists = await this.fieldsRepo.findOne({
-        where: { placeId: apiField.place_id },
-      });
+    for (const city of allCities) {
+      this.logger.log(`🔄 Синхронізація полів для міста: ${city}`);
 
-      if (!exists) {
-        const newField = this.fieldsRepo.create({
-          placeId: apiField.place_id,
-          phoneNumber: undefined,
-          price: undefined,
-          additionalInfo: undefined,
+      let nextPageToken: string | null | undefined = undefined;
+
+      do {
+        const { fields, nextPageToken: newToken } = await this.getNearbyFields({
+          city,
+          pageToken: nextPageToken,
         });
-        await this.fieldsRepo.save(newField);
-      }
+
+        for (const apiField of fields) {
+          const exists = await this.fieldsRepo.findOne({
+            where: { placeId: apiField.place_id },
+          });
+
+          if (!exists) {
+            const newField = this.fieldsRepo.create({
+              placeId: apiField.place_id,
+              phoneNumber: undefined,
+              price: undefined,
+              additionalInfo: undefined,
+            });
+            await this.fieldsRepo.save(newField);
+          }
+        }
+
+        nextPageToken = newToken;
+
+        if (nextPageToken) {
+          await this.delayService.wait(2000);
+        }
+      } while (nextPageToken);
+
+      this.logger.log(`✅ Завершено для міста: ${city}`);
     }
+
+    this.logger.log(`🎉 Синхронізація завершена для всіх міст`);
   }
 }
