@@ -38,7 +38,7 @@ export class BookingsController {
   }
 
   @Post()
-  @Roles(Role.User)
+  @Roles(Role.User, Role.Admin)
   async create(@Body() dto: CreateBookingDto, @Req() req: Request) {
     const user = req.user as User;
     return this.bookingsService.create(dto, user.id);

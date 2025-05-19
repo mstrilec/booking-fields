@@ -2,38 +2,43 @@ import axios from 'axios'
 
 const API_URL = 'http://localhost:5000'
 
-export const getNearbyFields = async city => {
+export const getNearbyFields = async (city?: string, pageToken?: string) => {
 	try {
-		const params = city ? { city } : {}
+		const params: { city?: string; pageToken?: string } = {}
+
+		if (city) params.city = city
+		if (pageToken) params.pageToken = pageToken
+
 		const response = await axios.get(`${API_URL}/fields`, { params })
 		return response.data
 	} catch (error) {
-		console.error('Error fetching nearby fields:', error)
-		throw error
+		throw new Error('Не вдалося завантажити поля')
 	}
 }
 
-export const getFieldByPlaceId = async placeId => {
+export const getFieldByPlaceId = async (placeId: string) => {
 	try {
 		const response = await axios.get(`${API_URL}/fields/${placeId}`)
 		return response.data
 	} catch (error) {
-		console.error(`Error fetching field with ID ${placeId}:`, error)
-		throw error
+		throw new Error(`Не вдалося завантажити поле з ID ${placeId}: ${error}`)
 	}
 }
 
-export const createField = async placeId => {
+export const createField = async (placeId: string) => {
 	try {
 		const response = await axios.post(`${API_URL}/fields/create`, { placeId })
 		return response.data
 	} catch (error) {
-		console.error(`Error creating field with placeId ${placeId}:`, error)
-		throw error
+		throw new Error(`Не вдалося створити поле з ID ${placeId}: ${error}`)
 	}
 }
 
-export const updateField = async (placeId, updateData, token) => {
+export const updateField = async (
+	placeId: string,
+	updateData: any,
+	token: string
+) => {
 	try {
 		const response = await axios.patch(
 			`${API_URL}/fields/${placeId}`,
@@ -46,12 +51,11 @@ export const updateField = async (placeId, updateData, token) => {
 		)
 		return response.data
 	} catch (error) {
-		console.error(`Error updating field with ID ${placeId}:`, error)
-		throw error
+		throw new Error(`Не вдалося оновити поле з ID ${placeId}: ${error}`)
 	}
 }
 
-export const syncNearbyFields = async token => {
+export const syncNearbyFields = async (token: string) => {
 	try {
 		const response = await axios.post(
 			`${API_URL}/fields/sync`,
@@ -64,7 +68,6 @@ export const syncNearbyFields = async token => {
 		)
 		return response.data
 	} catch (error) {
-		console.error('Error syncing nearby fields:', error)
-		throw error
+		throw new Error('Не вдалося синхронізувати поля')
 	}
 }

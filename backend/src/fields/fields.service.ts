@@ -1,10 +1,13 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AxiosResponse } from 'axios';
 import { Repository } from 'typeorm';
+import { DelayService } from '../delay/delay.service';
 import { UpdateFieldDto } from '../dto/update-field.dto';
 import { Field } from '../entities/field.entity';
+import { LoggerService } from '../logger/logger.service';
 import { City } from '../types/enums';
 import {
   FieldDetails,
@@ -19,22 +22,72 @@ import { CITY_COORDINATES } from '../types/variables';
 export class FieldsService {
   constructor(
     private readonly httpService: HttpService,
+    private readonly configService: ConfigService,
+    private readonly delayService: DelayService,
+    private readonly logger: LoggerService,
     @InjectRepository(Field)
     private fieldsRepo: Repository<Field>,
   ) {}
-
   async getNearbyFields(
     options: FindNearbyFieldsOptions = {},
-  ): Promise<GooglePlacesResult[]> {
-    const { city = City.Kyiv, radius = 5000, type = 'stadium' } = options;
+  ): Promise<{ fields: GooglePlacesResult[]; nextPageToken?: string | null }> {
+    const baseGoogleUrl = this.configService.get<string>('GOOGLE_URL');
+    const defaultCityName = this.configService.get<string>(
+      'DEFAULT_CITY',
+      'Kyiv',
+    );
+    const defaultCity = Object.keys(City).includes(
+      defaultCityName as keyof typeof City,
+    )
+      ? City[defaultCityName as keyof typeof City]
+      : City.Kyiv;
+    const defaultRadius = this.configService.get<number>(
+      'DEFAULT_RADIUS',
+      10000,
+    );
+    const defaultType = this.configService.get<string>(
+      'DEFAULT_TYPE',
+      'stadium',
+    );
+    const {
+      city = defaultCity,
+      radius = defaultRadius,
+      type = defaultType,
+      pageToken,
+    } = options;
+
+    // this.logger.log('Options: ', JSON.stringify(options));
 
     const location = CITY_COORDINATES[city];
     const key = process.env.GOOGLE_API_KEY;
-    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location}&radius=${radius}&type=${type}&key=${key}`;
+    let url: string;
 
-    const response: AxiosResponse<GoogleNearbySearchResponse> =
-      await this.httpService.axiosRef.get(url);
-    return response.data.results;
+    if (pageToken) {
+      url = `${baseGoogleUrl}pagetoken=${pageToken}&key=${key}`;
+
+      url += `&cacheBuster=${Date.now()}`;
+    } else {
+      url = `${baseGoogleUrl}location=${location}&radius=${radius}&type=${type}&key=${key}`;
+    }
+
+    // this.logger.log('Запит до Google Places API:', url);
+
+    if (pageToken) {
+      await this.delayService.wait(2000);
+    }
+
+    try {
+      const response: AxiosResponse<GoogleNearbySearchResponse> =
+        await this.httpService.axiosRef.get(url);
+
+      return {
+        fields: response.data.results,
+        nextPageToken: response.data.next_page_token || null,
+      };
+    } catch {
+      this.logger.error('Error fetching data from Google Places API');
+      throw new Error('Failed to fetch data from Google Places API');
+    }
   }
 
   async getFieldByPlaceId(placeId: string): Promise<FieldDetails> {
@@ -107,7 +160,7 @@ export class FieldsService {
 
       return await this.fieldsRepo.save(newField);
     } catch (error) {
-      console.error(`Error creating field with placeId ${placeId}:`, error);
+      this.logger.error(`Error creating field with placeId ${placeId}:`, error);
       throw new NotFoundException(
         'Could not create field from Google Places API',
       );
@@ -134,22 +187,45 @@ export class FieldsService {
   }
 
   async syncNearbyFields(): Promise<void> {
-    const fieldsFromApi = await this.getNearbyFields();
+    const allCities = Object.values(City);
 
-    for (const apiField of fieldsFromApi) {
-      const exists = await this.fieldsRepo.findOne({
-        where: { placeId: apiField.place_id },
-      });
+    for (const city of allCities) {
+      this.logger.log(`🔄 Синхронізація полів для міста: ${city}`);
 
-      if (!exists) {
-        const newField = this.fieldsRepo.create({
-          placeId: apiField.place_id,
-          phoneNumber: undefined,
-          price: undefined,
-          additionalInfo: undefined,
+      let nextPageToken: string | null | undefined = undefined;
+
+      do {
+        const { fields, nextPageToken: newToken } = await this.getNearbyFields({
+          city,
+          pageToken: nextPageToken,
         });
-        await this.fieldsRepo.save(newField);
-      }
+
+        for (const apiField of fields) {
+          const exists = await this.fieldsRepo.findOne({
+            where: { placeId: apiField.place_id },
+          });
+
+          if (!exists) {
+            const newField = this.fieldsRepo.create({
+              placeId: apiField.place_id,
+              phoneNumber: undefined,
+              price: undefined,
+              additionalInfo: undefined,
+            });
+            await this.fieldsRepo.save(newField);
+          }
+        }
+
+        nextPageToken = newToken;
+
+        if (nextPageToken) {
+          await this.delayService.wait(2000);
+        }
+      } while (nextPageToken);
+
+      this.logger.log(`✅ Завершено для міста: ${city}`);
     }
+
+    this.logger.log(`🎉 Синхронізація завершена для всіх міст`);
   }
 }
