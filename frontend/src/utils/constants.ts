@@ -24,28 +24,28 @@ export const optionsCities = [
 ]
 
 export const optionsBusinessStatus = [
-	{ label: 'Всі статуси', value: 'all' },
+	{ label: 'Всі', value: 'all' },
 	{ label: '✅ Відкриті', value: 'OPERATIONAL' },
-	{ label: '⏱️ Тимчасово закриті', value: 'CLOSED_TEMPORARILY' },
-	{ label: '❌ Постійно закриті', value: 'CLOSED_PERMANENTLY' },
+	{ label: '⏱️ Тимчасово', value: 'CLOSED_TEMPORARILY' },
+	{ label: '❌ Закриті', value: 'CLOSED_PERMANENTLY' },
 ]
 
 export const optionsRating = [
 	{ label: 'Рейтинг', value: 'none' },
-	{ label: '⭐ Рейтинг: високий-низький', value: 'desc' },
-	{ label: '⭐ Рейтинг: низький-високий', value: 'asc' },
+	{ label: '⭐ ↓', value: 'desc' },
+	{ label: '⭐ ↑', value: 'asc' },
 ]
 
 export const optionsReviews = [
-	{ label: 'Кількість відгуків', value: 'none' },
-	{ label: '👥 Відгуки: багато-мало', value: 'desc' },
-	{ label: '👤 Відгуки: мало-багато', value: 'asc' },
+	{ label: 'Відгуки', value: 'none' },
+	{ label: '👥 ↓', value: 'desc' },
+	{ label: '👤 ↑', value: 'asc' },
 ]
 
 export const optionsPrice = [
 	{ label: 'Ціна', value: 'none' },
-	{ label: '💰 Ціна: висока-низька', value: 'desc' },
-	{ label: '💸 Ціна: низька-висока', value: 'asc' },
+	{ label: '💰 ↓', value: 'desc' },
+	{ label: '💸 ↑', value: 'asc' },
 ]
 
 export const optionsTime = [

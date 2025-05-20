@@ -131,7 +131,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
 						<button
 							type='submit'
 							disabled={isSubmitting}
-							className='self-end bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200 disabled:bg-blue-300'
+							className='self-end bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200 disabled:bg-blue-300 cursor-pointer'
 						>
 							{isSubmitting ? 'Додаємо...' : 'Додати коментар'}
 						</button>

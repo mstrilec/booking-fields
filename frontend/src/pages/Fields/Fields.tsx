@@ -185,7 +185,7 @@ const Fields = () => {
 						<DropDown
 							options={optionsBusinessStatus}
 							placeholder='Всі статуси'
-							width='18rem'
+							width='19rem'
 							onChange={option => setBusinessStatus(option.value)}
 						/>
 						<DropDown
@@ -245,7 +245,7 @@ const Fields = () => {
 					<div className='mt-6 flex justify-center'>
 						{!isLoadingMore ? (
 							<button
-								className='bg-[#1171f5] text-white rounded-xl py-2 px-6 text-lg font-semibold hover:bg-[#0e5ed1] transition duration-300'
+								className='bg-[#1171f5] text-white rounded-xl py-2 px-6 text-lg font-semibold hover:bg-[#0e5ed1] transition duration-300 cursor-pointer'
 								onClick={loadMoreFields}
 							>
 								Завантажити більше
