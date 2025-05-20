@@ -27,7 +27,7 @@ const DropDown = ({ options, placeholder, width, onChange }: DropDownProps) => {
 		<div className='relative' style={{ width }}>
 			<button
 				onClick={() => setIsOpen(!isOpen)}
-				className='w-full px-4 py-3 pr-10 rounded-xl text-[#162328] bg-white border border-gray-300 shadow-md text-left'
+				className='w-full px-4 py-3 pr-10 rounded-xl text-[#162328] bg-white border border-gray-300 shadow-md text-left cursor-pointer'
 			>
 				{selected}
 				<span

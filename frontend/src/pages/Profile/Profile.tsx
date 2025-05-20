@@ -223,7 +223,7 @@ const Profile = () => {
 										{!isPast && booking.status === 'pending' && (
 											<div className='flex gap-2'>
 												<button
-													className='px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600'
+													className='px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer'
 													onClick={() =>
 														handleUpdateStatus(booking.id, 'confirmed')
 													}
@@ -231,7 +231,7 @@ const Profile = () => {
 													Підтвердити
 												</button>
 												<button
-													className='px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600'
+													className='px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 cursor-pointer'
 													onClick={() =>
 														handleUpdateStatus(booking.id, 'cancelled')
 													}
@@ -250,7 +250,7 @@ const Profile = () => {
 
 			<div className='text-center mt-10'>
 				<button
-					className='px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-300'
+					className='px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-300 cursor-pointer'
 					onClick={logout}
 				>
 					Вийти
