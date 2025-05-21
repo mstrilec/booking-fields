@@ -11,11 +11,12 @@ import DropDown from '../../components/DropDown/DropDown'
 import { useAuth } from '../../context/AuthContext'
 import { createBooking } from '../../services/bookingService'
 import { createField, getFieldByPlaceId } from '../../services/fieldService'
+import { Field } from '../../types/interfaces'
 import { optionsTime } from '../../utils/constants'
 
 const FieldPage = () => {
 	const { placeId } = useParams()
-	const [field, setField] = useState(null)
+	const [field, setField] = useState<Field | null>(null)
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState(null)
 	const [startDate, setStartDate] = useState<Date | null>(null)
@@ -28,6 +29,7 @@ const FieldPage = () => {
 		const fetchField = async () => {
 			try {
 				setLoading(true)
+				if (!placeId) return
 				let data = await getFieldByPlaceId(placeId)
 
 				if (!data) {
@@ -36,8 +38,10 @@ const FieldPage = () => {
 
 				setField(data)
 				setError(null)
-			} catch (err) {
-				setError('Не вдалося завантажити інформацію про поле')
+			} catch {
+				setError(
+					'Не вдалося завантажити інформацію про поле' as unknown as null
+				)
 			} finally {
 				setLoading(false)
 			}
@@ -78,6 +82,7 @@ const FieldPage = () => {
 				time.getMinutes()
 			)
 			const endTime = new Date(startTime.getTime() + duration * 60000)
+			if (!placeId) return
 			const fieldFromBD = await createField(placeId)
 
 			await createBooking({
@@ -90,7 +95,7 @@ const FieldPage = () => {
 
 			sessionStorage.removeItem('bookingDate')
 			sessionStorage.removeItem('bookingTime')
-		} catch (error) {
+		} catch {
 			toast.error('Помилка при створенні бронювання')
 		} finally {
 			setIsSubmitting(false)
@@ -99,9 +104,10 @@ const FieldPage = () => {
 
 	const handleCommentAdded = async () => {
 		try {
+			if (!placeId) return
 			const updatedField = await getFieldByPlaceId(placeId)
 			setField(updatedField)
-		} catch (error) {
+		} catch {
 			toast.error('Не вдалося оновити коментарі')
 		}
 	}
@@ -114,7 +120,7 @@ const FieldPage = () => {
 		<div className='container mx-auto px-4 mt-[24px]'>
 			<div className='flex justify-between'>
 				<div>
-					{field.photos && field.photos.length > 0 ? (
+					{field?.photos && field.photos.length > 0 ? (
 						<img
 							src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=600&photo_reference=${
 								field.photos[0].photo_reference
@@ -132,21 +138,21 @@ const FieldPage = () => {
 						</div>
 					)}
 
-					<h2 className='text-3xl font-semibold mb-4'>{field.name}</h2>
-					<p className='text-lg text-gray-600 mb-2'>{field.address}</p>
+					<h2 className='text-3xl font-semibold mb-4'>{field?.name}</h2>
+					<p className='text-lg text-gray-600 mb-2'>{field?.address}</p>
 					<p className='text-lg text-gray-600 mb-2'>
-						Номер телефону: {field.phoneNumber ?? 'Немає даних'}
+						Номер телефону: {field?.phoneNumber ?? 'Немає даних'}
 					</p>
 					<p className='text-lg text-gray-600 mb-2'>
-						Ціна за годину: {field.price ?? 'Немає даних'}
-						{field.price && ' ₴'}
+						Ціна за годину: {field?.price ?? 'Немає даних'}
+						{field?.price && ' ₴'}
 					</p>
 					<p className='text-lg text-gray-600 mb-2'>
-						Додаткова інформація: {field.additionalInfo ?? 'Немає даних'}
+						Додаткова інформація: {field?.additionalInfo ?? 'Немає даних'}
 					</p>
-					{field.website && (
+					{field?.website && (
 						<Link
-							to={field.website}
+							to={field?.website}
 							target='_blank'
 							rel='noopener noreferrer'
 							className='text-blue-500 underline'
@@ -207,7 +213,13 @@ const FieldPage = () => {
 								options={optionsTime}
 								placeholder='На 1 годину'
 								width='100%'
-								onChange={option => setDuration(option.value)}
+								onChange={option => {
+									const durationValue =
+										typeof option.value === 'string'
+											? parseInt(option.value, 10)
+											: option.value
+									setDuration(durationValue)
+								}}
 							/>
 							<button
 								className='bg-[#e5fc3a] text-[#1171f5] font-semibold px-5 py-2 rounded-lg hover:bg-[#bfd800] cursor-pointer transition duration-300 mt-4'
@@ -224,8 +236,8 @@ const FieldPage = () => {
 				<CommentSection
 					onCommentAdded={handleCommentAdded}
 					placeId={placeId}
-					comments={field.comments}
-					googleReviews={field.reviews}
+					comments={field?.comments}
+					googleReviews={field?.reviews}
 				/>
 			</div>
 		</div>

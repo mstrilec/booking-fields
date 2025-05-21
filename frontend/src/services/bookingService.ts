@@ -34,7 +34,10 @@ export const getUserBookings = async () => {
 	return response.data
 }
 
-export const updateBookingStatus = async (id, status) => {
+export const updateBookingStatus = async (
+	id: string,
+	status: 'pending' | 'confirmed' | 'cancelled'
+) => {
 	const token = localStorage.getItem('token')
 	if (!token) throw new Error('No token')
 

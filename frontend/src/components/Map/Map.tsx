@@ -5,8 +5,13 @@ import {
 	useJsApiLoader,
 } from '@react-google-maps/api'
 import { useEffect, useState } from 'react'
+import { Field } from '../../types/interfaces'
 
-const Map = ({ fields }) => {
+interface MapProps {
+	fields: Field[]
+}
+
+const Map: React.FC<MapProps> = ({ fields }) => {
 	const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY
 
 	if (!GOOGLE_API_KEY) {
@@ -20,7 +25,7 @@ const Map = ({ fields }) => {
 		libraries: ['places'],
 	})
 
-	const [selectedField, setSelectedField] = useState(null)
+	const [selectedField, setSelectedField] = useState<Field | null>(null)
 	const [mapCenter, setMapCenter] = useState({ lat: 50.4501, lng: 30.5234 })
 
 	useEffect(() => {
@@ -83,7 +88,7 @@ const Map = ({ fields }) => {
 			}}
 		>
 			{hasValidFields &&
-				fields.map((field, index) => {
+				fields.map((field: Field, index: number) => {
 					if (!field.geometry || !field.geometry.location) return null
 
 					return (
@@ -99,29 +104,31 @@ const Map = ({ fields }) => {
 					)
 				})}
 
-			{selectedField && selectedField.geometry && (
-				<InfoWindow
-					position={{
-						lat: selectedField.geometry.location.lat,
-						lng: selectedField.geometry.location.lng,
-					}}
-					onCloseClick={() => setSelectedField(null)}
-				>
-					<div className='text-sm p-1'>
-						<h3 className='font-semibold'>{selectedField.name}</h3>
-						<p className='text-gray-600'>{selectedField.vicinity}</p>
-						{selectedField.rating && (
-							<div className='flex items-center mt-1'>
-								<span className='text-yellow-400 mr-1'>★</span>
-								<span>{selectedField.rating}</span>
-								<span className='text-gray-400 text-xs ml-1'>
-									({selectedField.user_ratings_total || 0})
-								</span>
-							</div>
-						)}
-					</div>
-				</InfoWindow>
-			)}
+			{selectedField &&
+				selectedField.geometry &&
+				selectedField.geometry.location && (
+					<InfoWindow
+						position={{
+							lat: selectedField.geometry.location.lat,
+							lng: selectedField.geometry.location.lng,
+						}}
+						onCloseClick={() => setSelectedField(null)}
+					>
+						<div className='text-sm p-1'>
+							<h3 className='font-semibold'>{selectedField.name}</h3>
+							<p className='text-gray-600'>{selectedField.vicinity}</p>
+							{selectedField.rating && (
+								<div className='flex items-center mt-1'>
+									<span className='text-yellow-400 mr-1'>★</span>
+									<span>{selectedField.rating}</span>
+									<span className='text-gray-400 text-xs ml-1'>
+										({selectedField.user_ratings_total || 0})
+									</span>
+								</div>
+							)}
+						</div>
+					</InfoWindow>
+				)}
 		</GoogleMap>
 	)
 }

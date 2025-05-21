@@ -7,24 +7,17 @@ import {
 	updateBookingStatus,
 } from '../../services/bookingService'
 import { getFieldByPlaceId } from '../../services/fieldService'
-
-interface SortOption {
-	label: string
-	value: string
-}
+import { Booking, User } from '../../types/interfaces'
+import { sortOptions } from '../../utils/constants'
 
 const Profile = () => {
-	const { user, logout } = useAuth()
-	const [bookings, setBookings] = useState([])
+	const { user, logout } = useAuth() as {
+		user: User | null
+		logout: () => void
+	}
+	const [bookings, setBookings] = useState<Booking[]>([])
 	const [loading, setLoading] = useState(true)
-	const [sortOption, setSortOption] = useState('date-asc')
-
-	const sortOptions: SortOption[] = [
-		{ label: 'Датою ↑', value: 'date-asc' },
-		{ label: 'Датою ↓', value: 'date-desc' },
-		{ label: 'Статусом', value: 'status' },
-		{ label: 'Часом', value: 'time' },
-	]
+	const [sortOption, setSortOption] = useState<string>('date-asc')
 
 	useEffect(() => {
 		const fetchBookings = async () => {
@@ -32,18 +25,18 @@ const Profile = () => {
 				const data = await getUserBookings()
 
 				const bookingsWithField = await Promise.all(
-					data.map(async booking => {
+					data.map(async (booking: Booking) => {
 						try {
 							const fullField = await getFieldByPlaceId(booking.field.placeId)
 							return { ...booking, field: fullField }
-						} catch (err) {
+						} catch {
 							return booking
 						}
 					})
 				)
 
 				setBookings(bookingsWithField)
-			} catch (err) {
+			} catch {
 				throw new Error('Не вдалося завантажити бронювання')
 			} finally {
 				setLoading(false)
@@ -53,7 +46,10 @@ const Profile = () => {
 		fetchBookings()
 	}, [])
 
-	const handleUpdateStatus = async (id, newStatus) => {
+	const handleUpdateStatus = async (
+		id: string,
+		newStatus: 'pending' | 'confirmed' | 'cancelled'
+	) => {
 		try {
 			await updateBookingStatus(id, newStatus)
 			setBookings(prev =>
@@ -61,12 +57,12 @@ const Profile = () => {
 					booking.id === id ? { ...booking, status: newStatus } : booking
 				)
 			)
-		} catch (error) {
+		} catch {
 			throw new Error('Не вдалося оновити статус бронювання')
 		}
 	}
 
-	const sortBookings = bookings => {
+	const sortBookings = (bookings: Booking[]) => {
 		return [...bookings].sort((a, b) => {
 			const dateA = new Date(a.startTime)
 			const dateB = new Date(b.startTime)
@@ -109,24 +105,28 @@ const Profile = () => {
 				<div className='flex justify-between'>
 					<span className='font-semibold'>Ім’я:</span>
 					<span>
-						{user.firstName} {user.lastName}
+						{user?.firstName} {user?.lastName}
 					</span>
 				</div>
 				<div className='flex justify-between'>
 					<span className='font-semibold'>Email:</span>
-					<span>{user.email}</span>
+					<span>{user?.email}</span>
 				</div>
 				<div className='flex justify-between'>
 					<span className='font-semibold'>Номер телефону:</span>
-					<span>{user.phoneNumber || 'Немає даних'}</span>
+					<span>{user?.phoneNumber || 'Немає даних'}</span>
 				</div>
 				<div className='flex justify-between'>
 					<span className='font-semibold'>Роль:</span>
-					<span>{user.role === 'admin' ? 'Адміністратор' : 'Користувач'}</span>
+					<span>{user?.role === 'admin' ? 'Адміністратор' : 'Користувач'}</span>
 				</div>
 				<div className='flex justify-between'>
 					<span className='font-semibold'>Дата реєстрації:</span>
-					<span>{new Date(user.registrationDate).toLocaleDateString()}</span>
+					<p>
+						{user?.registrationDate
+							? new Date(user.registrationDate).toLocaleDateString()
+							: 'Not available'}
+					</p>
 				</div>
 			</div>
 
@@ -140,7 +140,7 @@ const Profile = () => {
 						options={sortOptions}
 						placeholder='Оберіть критерій'
 						width='250px'
-						onChange={option => setSortOption(option.value)}
+						onChange={option => setSortOption(option.value as string)}
 					/>
 				</div>
 				{loading ? (

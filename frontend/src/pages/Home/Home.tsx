@@ -5,18 +5,21 @@ import FieldCard from '../../components/FieldCard/FieldCard'
 import ProsCard from '../../components/ProsCard/ProsCard'
 import SearchBlock from '../../components/SearchBlock/SearchBlock'
 import { getNearbyFields } from '../../services/fieldService'
+import { Field } from '../../types/interfaces'
 import { featuresData } from '../../utils/featuresData'
 
 const Home = () => {
-	const [fields, setFields] = useState([])
+	const [fields, setFields] = useState<Field[]>([])
 
 	useEffect(() => {
 		const fetchFields = async () => {
 			try {
 				const data = await getNearbyFields()
 				const fields = data.fields
-				fields.sort((a, b) => {
-					return b.user_ratings_total - a.user_ratings_total
+				fields.sort((a: Field, b: Field) => {
+					const aRating = a.user_ratings_total ?? 0
+					const bRating = b.user_ratings_total ?? 0
+					return bRating - aRating
 				})
 				setFields(fields.slice(0, 4))
 			} catch (error) {
@@ -61,7 +64,7 @@ const Home = () => {
 				</h2>
 				<div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'>
 					{fields.map((field, index) => (
-						<FieldCard field={field} index={index} />
+						<FieldCard field={field} key={index} />
 					))}
 				</div>
 			</div>
