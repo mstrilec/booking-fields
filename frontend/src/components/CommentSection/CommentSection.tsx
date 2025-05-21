@@ -5,20 +5,7 @@ import { useState } from 'react'
 import { toast } from 'react-toastify'
 import { useAuth } from '../../context/AuthContext'
 import { createComment, deleteComment } from '../../services/commentService'
-
-interface CommentUser {
-	id: number
-	firstName: string
-	lastName: string
-	email: string
-}
-
-interface Comment {
-	id: number
-	text: string
-	createdAt: string
-	user: CommentUser
-}
+import { Comment } from '../../types/interfaces'
 
 interface GoogleReview {
 	author_name: string
@@ -33,6 +20,24 @@ interface CommentSectionProps {
 	comments?: Comment[]
 	onCommentAdded: () => void
 }
+
+interface GoogleFeedbackItem {
+	type: 'google'
+	author: string
+	text: string
+	time: number
+}
+
+interface UserFeedbackItem {
+	type: 'user'
+	id: number
+	author: string
+	text: string
+	time: number
+	userId: number
+}
+
+type FeedbackItem = GoogleFeedbackItem | UserFeedbackItem
 
 const CommentSection: React.FC<CommentSectionProps> = ({
 	placeId,
@@ -57,6 +62,11 @@ const CommentSection: React.FC<CommentSectionProps> = ({
 			return
 		}
 
+		if (!placeId) {
+			toast.error('Не вдалося визначити місце для коментаря')
+			return
+		}
+
 		try {
 			setIsSubmitting(true)
 			await createComment({
@@ -66,7 +76,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
 			setCommentText('')
 			toast.success('Коментар додано успішно')
 			onCommentAdded()
-		} catch (error) {
+		} catch {
 			toast.error('Не вдалося додати коментар')
 		} finally {
 			setIsSubmitting(false)
@@ -82,7 +92,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
 			await deleteComment(commentId)
 			toast.success('Коментар видалено')
 			onCommentAdded()
-		} catch (error) {
+		} catch {
 			toast.error('Не вдалося видалити коментар')
 		}
 	}
@@ -92,15 +102,15 @@ const CommentSection: React.FC<CommentSectionProps> = ({
 		return format(date, 'dd MMMM yyyy о HH:mm', { locale: uk })
 	}
 
-	const allFeedback = [
+	const allFeedback: FeedbackItem[] = [
 		...googleReviews.map(review => ({
-			type: 'google',
+			type: 'google' as const,
 			author: review.author_name,
 			text: review.text,
 			time: review.time * 1000,
 		})),
 		...comments.map(comment => ({
-			type: 'user',
+			type: 'user' as const,
 			id: comment.id,
 			author: `${comment.user.firstName} ${comment.user.lastName}`,
 			text: comment.text,

@@ -7,6 +7,7 @@ import DropDown from '../../components/DropDown/DropDown'
 import FieldCard from '../../components/FieldCard/FieldCard'
 import Map from '../../components/Map/Map'
 import { getNearbyFields } from '../../services/fieldService'
+import { AddressComponent, Field } from '../../types/interfaces'
 import {
 	optionsBusinessStatus,
 	optionsCities,
@@ -16,14 +17,14 @@ import {
 } from '../../utils/constants'
 
 const Fields = () => {
-	const [fields, setFields] = useState([])
+	const [fields, setFields] = useState<Field[]>([])
 	const [loading, setLoading] = useState(true)
-	const [error, setError] = useState(null)
+	const [error, setError] = useState<string | null>(null)
 	const [businessStatus, setBusinessStatus] = useState<string>('all')
 	const [ratingSort, setRatingSort] = useState<string>('none')
 	const [reviewsSort, setReviewsSort] = useState<string>('none')
 	const [priceSort, setPriceSort] = useState<string>('none')
-	const [filteredFields, setFilteredFields] = useState([])
+	const [filteredFields, setFilteredFields] = useState<Field[]>([])
 	const [searchQuery, setSearchQuery] = useState('')
 	const [city, setCity] = useState<string>('Київ')
 	const [nextPageToken, setNextPageToken] = useState<string | null>(null)
@@ -53,11 +54,11 @@ const Fields = () => {
 						setFields(initialFieldsData.fields)
 						setNextPageToken(initialFieldsData.nextPageToken || null)
 					}
-				} catch (error) {
+				} catch {
 					toast.error('Помилка при перезавантаженні полів')
 				}
 			}
-		} catch (error) {
+		} catch {
 			toast.error('Не вдалося завантажити більше полів')
 		} finally {
 			setIsLoadingMore(false)
@@ -87,8 +88,8 @@ const Fields = () => {
 							}&language=uk`
 						)
 						const data = await res.json()
-						const cityComponent = data.results[0]?.address_components.find(c =>
-							c.types.includes('locality')
+						const cityComponent = data.results[0]?.address_components.find(
+							(c: AddressComponent) => c.types.includes('locality')
 						)
 						const detectedCity = cityComponent?.long_name
 
@@ -99,7 +100,7 @@ const Fields = () => {
 							sessionStorage.setItem('userCity', detectedCity)
 							setCity(detectedCity)
 						}
-					} catch (error) {
+					} catch {
 						throw new Error('Не вдалося отримати дані про місто')
 					}
 				})
@@ -115,7 +116,7 @@ const Fields = () => {
 				setFields(fieldsData.fields)
 				setNextPageToken(fieldsData.nextPageToken || null)
 				setError(null)
-			} catch (error) {
+			} catch {
 				setError('Не вдалося завантажити дані про клуби')
 			} finally {
 				setLoading(false)
@@ -186,25 +187,25 @@ const Fields = () => {
 							options={optionsBusinessStatus}
 							placeholder='Всі статуси'
 							width='19rem'
-							onChange={option => setBusinessStatus(option.value)}
+							onChange={option => setBusinessStatus(option.value as string)}
 						/>
 						<DropDown
 							options={optionsRating}
 							placeholder='Рейтинг'
 							width='18rem'
-							onChange={option => setRatingSort(option.value)}
+							onChange={option => setRatingSort(option.value as string)}
 						/>
 						<DropDown
 							options={optionsReviews}
 							placeholder='Кількість відгуків'
 							width='24rem'
-							onChange={option => setReviewsSort(option.value)}
+							onChange={option => setReviewsSort(option.value as string)}
 						/>
 						<DropDown
 							options={optionsPrice}
 							placeholder='Ціна'
 							width='18rem'
-							onChange={option => setPriceSort(option.value)}
+							onChange={option => setPriceSort(option.value as string)}
 						/>
 					</div>
 				</div>
@@ -215,8 +216,8 @@ const Fields = () => {
 						placeholder={city}
 						width='20rem'
 						onChange={option => {
-							sessionStorage.setItem('userCity', option.value)
-							setCity(option.value)
+							sessionStorage.setItem('userCity', option.value as string)
+							setCity(option.value as string)
 						}}
 					/>
 				</div>
@@ -238,7 +239,7 @@ const Fields = () => {
 				<hr className='mt-4 border-gray-400' />
 				<div className='grid grid-cols-1 md:grid-cols-2 gap-6 mt-6'>
 					{filteredFields.map((field, index) => (
-						<FieldCard field={field} index={index} />
+						<FieldCard field={field} key={index} />
 					))}
 				</div>
 				{nextPageToken && (

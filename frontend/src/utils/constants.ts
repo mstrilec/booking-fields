@@ -1,3 +1,5 @@
+import { SortOption } from '../types/interfaces'
+
 export const optionsCities = [
 	{ label: 'Київ', value: 'Київ' },
 	{ label: 'Львів', value: 'Львів' },
@@ -61,4 +63,11 @@ export const optionsTime = [
 	{ label: 'На 10 годин', value: 600 },
 	{ label: 'На 11 годин', value: 660 },
 	{ label: 'На 12 годин', value: 720 },
+]
+
+export const sortOptions: SortOption[] = [
+	{ label: 'Датою ↑', value: 'date-asc' },
+	{ label: 'Датою ↓', value: 'date-desc' },
+	{ label: 'Статусом', value: 'status' },
+	{ label: 'Часом', value: 'time' },
 ]

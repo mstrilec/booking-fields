@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { UpdatedField } from '../types/interfaces'
 
 const API_URL = 'http://localhost:5000'
 
@@ -11,7 +12,7 @@ export const getNearbyFields = async (city?: string, pageToken?: string) => {
 
 		const response = await axios.get(`${API_URL}/fields`, { params })
 		return response.data
-	} catch (error) {
+	} catch {
 		throw new Error('Не вдалося завантажити поля')
 	}
 }
@@ -36,7 +37,7 @@ export const createField = async (placeId: string) => {
 
 export const updateField = async (
 	placeId: string,
-	updateData: any,
+	updateData: UpdatedField,
 	token: string
 ) => {
 	try {
@@ -67,7 +68,7 @@ export const syncNearbyFields = async (token: string) => {
 			}
 		)
 		return response.data
-	} catch (error) {
+	} catch {
 		throw new Error('Не вдалося синхронізувати поля')
 	}
 }

@@ -1,13 +1,15 @@
 import { useNavigate } from 'react-router-dom'
+import { Field } from '../../types/interfaces'
 
-const FieldCard = ({ field, index }) => {
+interface FieldCardProps {
+	field: Field
+}
+
+const FieldCard = ({ field }: FieldCardProps) => {
 	const navigate = useNavigate()
 
 	return (
-		<div
-			key={index}
-			className='bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition duration-300 cursor-pointer flex flex-col justify-between'
-		>
+		<div className='bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition duration-300 cursor-pointer flex flex-col justify-between'>
 			{field.photos && field.photos.length > 0 ? (
 				<img
 					src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${

@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { toast } from 'react-toastify'
 import { updateField } from '../../services/fieldService'
+import { Field } from '../../types/interfaces'
 
 interface AdminFieldEditorProps {
-	field: any
-	setField: React.Dispatch<React.SetStateAction<any>>
-	placeId: string
+	field: Field | null
+	setField: React.Dispatch<React.SetStateAction<Field | null>>
+	placeId: string | undefined
 }
 
 const AdminFieldEditor: React.FC<AdminFieldEditorProps> = ({
@@ -21,19 +22,29 @@ const AdminFieldEditor: React.FC<AdminFieldEditorProps> = ({
 			return
 		}
 
+		if (!placeId) {
+			toast.error('Не вказано ідентифікатор поля')
+			return
+		}
+
 		try {
 			const token = localStorage.getItem('token')
+			if (!token) {
+				toast.error('Не знайдено токен авторизації')
+				return
+			}
 			await updateField(
 				placeId,
 				{
-					phoneNumber: field.phoneNumber,
-					price: Number(field.price),
-					additionalInfo: field.additionalInfo,
+					placeId: placeId,
+					phoneNumber: field?.phoneNumber,
+					price: Number(field?.price),
+					additionalInfo: field?.additionalInfo,
 				},
 				token
 			)
 			toast.success('Поле оновлено успішно')
-		} catch (error) {
+		} catch {
 			toast.error('Не вдалося оновити поле')
 		}
 	}
@@ -49,30 +60,44 @@ const AdminFieldEditor: React.FC<AdminFieldEditorProps> = ({
 				placeholder='Номер телефону...'
 				className='w-full p-4 rounded-xl border border-gray-300 shadow-sm mb-4'
 				value={field?.phoneNumber ?? ''}
-				onChange={e =>
-					setField(prev => ({
-						...prev,
+				onChange={e => {
+					if (!field) return
+
+					setField({
+						...field,
 						phoneNumber: e.target.value,
-					}))
-				}
+					})
+				}}
 			/>
 
 			<input
 				type='text'
 				placeholder='Ціна за годину...'
 				className='w-full p-4 rounded-xl border border-gray-300 shadow-sm mb-2'
-				value={field?.price ?? ''}
+				value={field?.price != null ? field.price.toString() : ''}
 				onChange={e => {
+					if (!field) return
+
 					const value = e.target.value
-					if (!/^\d*$/.test(value)) {
+
+					if (value === '') {
+						setPriceError('')
+						setField({
+							...field,
+							price: 0,
+						})
+						return
+					}
+
+					if (!/^\d+$/.test(value)) {
 						setPriceError('Ціна повинна бути числом')
 					} else {
 						setPriceError('')
+						setField({
+							...field,
+							price: parseInt(value, 10),
+						})
 					}
-					setField(prev => ({
-						...prev,
-						price: value,
-					}))
 				}}
 			/>
 			{priceError && <p className='text-red-500 text-sm mb-2'>{priceError}</p>}
@@ -82,12 +107,14 @@ const AdminFieldEditor: React.FC<AdminFieldEditorProps> = ({
 				className='w-full p-4 rounded-xl border border-gray-300 shadow-sm'
 				rows={4}
 				value={field?.additionalInfo ?? ''}
-				onChange={e =>
-					setField(prev => ({
-						...prev,
+				onChange={e => {
+					if (!field) return
+
+					setField({
+						...field,
 						additionalInfo: e.target.value,
-					}))
-				}
+					})
+				}}
 			/>
 
 			<button
