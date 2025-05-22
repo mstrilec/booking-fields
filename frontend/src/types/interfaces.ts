@@ -82,3 +82,28 @@ export interface UpdatedField {
 	price?: number
 	additionalInfo?: string
 }
+
+export interface CommentData {
+	text: string
+	placeId: string
+}
+
+export interface CommentResponse {
+	id: number
+	text: string
+	createdAt: string
+	user: {
+		id: number
+		firstName: string
+		lastName: string
+		email: string
+	}
+}
+
+export interface RegisterForm {
+	firstName: string
+	lastName: string
+	email: string
+	password: string
+	phoneNumber?: string
+}

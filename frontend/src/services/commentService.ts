@@ -1,23 +1,7 @@
 import axios from 'axios'
+import { CommentData, CommentResponse } from '../types/interfaces'
 
 const API_URL = 'http://localhost:5000'
-
-interface CommentData {
-	text: string
-	placeId: string
-}
-
-interface CommentResponse {
-	id: number
-	text: string
-	createdAt: string
-	user: {
-		id: number
-		firstName: string
-		lastName: string
-		email: string
-	}
-}
 
 export const createComment = async (
 	data: CommentData
