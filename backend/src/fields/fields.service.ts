@@ -7,7 +7,6 @@ import { Repository } from 'typeorm';
 import { DelayService } from '../delay/delay.service';
 import { UpdateFieldDto } from '../dto/update-field.dto';
 import { Field } from '../entities/field.entity';
-import { LoggerService } from '../logger/logger.service';
 import { City } from '../types/enums';
 import {
   FieldDetails,
@@ -16,7 +15,8 @@ import {
   GooglePlaceDetailsResponse,
   GooglePlacesResult,
 } from '../types/interfaces';
-import { CITY_COORDINATES } from '../types/variables';
+import { CITY_COORDINATES } from '../utils/constants';
+import { LoggerService } from '../utils/logger.service';
 
 @Injectable()
 export class FieldsService {
@@ -24,7 +24,6 @@ export class FieldsService {
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
     private readonly delayService: DelayService,
-    private readonly logger: LoggerService,
     @InjectRepository(Field)
     private fieldsRepo: Repository<Field>,
   ) {}
@@ -56,8 +55,6 @@ export class FieldsService {
       pageToken,
     } = options;
 
-    // this.logger.log('Options: ', JSON.stringify(options));
-
     const location = CITY_COORDINATES[city];
     const key = process.env.GOOGLE_API_KEY;
     let url: string;
@@ -69,8 +66,6 @@ export class FieldsService {
     } else {
       url = `${baseGoogleUrl}location=${location}&radius=${radius}&type=${type}&key=${key}`;
     }
-
-    // this.logger.log('Запит до Google Places API:', url);
 
     if (pageToken) {
       await this.delayService.wait(2000);
@@ -85,14 +80,15 @@ export class FieldsService {
         nextPageToken: response.data.next_page_token || null,
       };
     } catch {
-      this.logger.error('Error fetching data from Google Places API');
+      LoggerService.error('Error fetching data from Google Places API');
       throw new Error('Failed to fetch data from Google Places API');
     }
   }
 
   async getFieldByPlaceId(placeId: string): Promise<FieldDetails> {
+    const baseGoogleUrl = this.configService.get<string>('GOOGLE_URL_DETAILS');
     const apiKey = process.env.GOOGLE_API_KEY;
-    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&key=${apiKey}`;
+    const url = `${baseGoogleUrl}place_id=${placeId}&key=${apiKey}`;
 
     try {
       const response: AxiosResponse<GooglePlaceDetailsResponse> =
@@ -160,7 +156,10 @@ export class FieldsService {
 
       return await this.fieldsRepo.save(newField);
     } catch (error) {
-      this.logger.error(`Error creating field with placeId ${placeId}:`, error);
+      LoggerService.error(
+        `Error creating field with placeId ${placeId}:`,
+        error,
+      );
       throw new NotFoundException(
         'Could not create field from Google Places API',
       );
@@ -190,7 +189,7 @@ export class FieldsService {
     const allCities = Object.values(City);
 
     for (const city of allCities) {
-      this.logger.log(`🔄 Синхронізація полів для міста: ${city}`);
+      LoggerService.log(`🔄 Synchronization of fields for the city: ${city}`);
 
       let nextPageToken: string | null | undefined = undefined;
 
@@ -223,9 +222,9 @@ export class FieldsService {
         }
       } while (nextPageToken);
 
-      this.logger.log(`✅ Завершено для міста: ${city}`);
+      LoggerService.log(`✅ Completed for the city: ${city}`);
     }
 
-    this.logger.log(`🎉 Синхронізація завершена для всіх міст`);
+    LoggerService.log(`🎉 Synchronization is complete for all cities`);
   }
 }

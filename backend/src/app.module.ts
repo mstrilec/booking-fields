@@ -7,9 +7,8 @@ import { CommentsModule } from './comments/comments.module';
 import { DatabaseModule } from './database/database.module';
 import { DelayModule } from './delay/delay.module';
 import { FieldsModule } from './fields/fields.module';
-import { LoggerModule } from './logger/logger.module';
-import { UsersModule } from './users/users.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -24,7 +23,6 @@ import { SchedulerModule } from './scheduler/scheduler.module';
     FieldsModule,
     CommentsModule,
     DelayModule,
-    LoggerModule,
     SchedulerModule,
   ],
   controllers: [],

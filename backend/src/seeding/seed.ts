@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker';
 import * as bcrypt from 'bcrypt';
 import { AppDataSource } from '../database/data-source';
 import { Booking } from '../entities/booking.entity';
+import { Comment } from '../entities/comment.entity';
 import { Field } from '../entities/field.entity';
 import { User } from '../entities/user.entity';
 
@@ -12,6 +13,7 @@ async function seed() {
   const userRepository = AppDataSource.getRepository(User);
   const fieldRepository = AppDataSource.getRepository(Field);
   const bookingRepository = AppDataSource.getRepository(Booking);
+  const commentRepository = AppDataSource.getRepository(Comment);
 
   const hashedPassword = await bcrypt.hash('password123', 10);
 
@@ -53,6 +55,17 @@ async function seed() {
 
   await bookingRepository.save(bookings);
   console.log('Bookings seeded');
+
+  const comments = Array.from({ length: 10 }, () =>
+    commentRepository.create({
+      text: faker.lorem.sentences({ min: 1, max: 3 }),
+      user: faker.helpers.arrayElement(users),
+      field: faker.helpers.arrayElement(fields),
+    }),
+  );
+
+  await commentRepository.save(comments);
+  console.log('Comments seeded');
 
   await AppDataSource.destroy();
   console.log('Database connection closed');
