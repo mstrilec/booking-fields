@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -9,6 +10,9 @@ import { Booking } from './booking.entity';
 import { Comment } from './comment.entity';
 
 @Entity()
+@Index('IDX_user_email', ['email'])
+@Index('IDX_user_role', ['role'])
+@Index('IDX_user_registration_date', ['registrationDate'])
 export class User {
   @PrimaryGeneratedColumn()
   id: number;

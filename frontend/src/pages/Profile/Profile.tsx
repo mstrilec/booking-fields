@@ -6,7 +6,6 @@ import {
 	getUserBookings,
 	updateBookingStatus,
 } from '../../services/bookingService'
-import { getFieldByPlaceId } from '../../services/fieldService'
 import { Booking, User } from '../../types/interfaces'
 import { sortOptions } from '../../utils/constants'
 
@@ -23,19 +22,7 @@ const Profile = () => {
 		const fetchBookings = async () => {
 			try {
 				const data = await getUserBookings()
-
-				const bookingsWithField = await Promise.all(
-					data.map(async (booking: Booking) => {
-						try {
-							const fullField = await getFieldByPlaceId(booking.field.placeId)
-							return { ...booking, field: fullField }
-						} catch {
-							return booking
-						}
-					})
-				)
-
-				setBookings(bookingsWithField)
+				setBookings(data)
 			} catch {
 				throw new Error('Не вдалося завантажити бронювання')
 			} finally {

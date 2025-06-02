@@ -24,6 +24,11 @@ export interface GooglePlacesResult {
     photo_reference: string;
     width: number;
   }>;
+  address?: string;
+  rating?: number;
+  user_ratings_total?: number;
+  icon?: string;
+  vicinity?: string;
 }
 
 export interface GoogleNearbySearchResponse {
@@ -72,6 +77,9 @@ export interface FieldDetails {
       email: string;
     };
   }>;
+  rating?: number;
+  userRatingTotal?: number;
+  icon?: string;
 }
 
 export interface FindNearbyFieldsOptions {
