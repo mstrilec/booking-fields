@@ -57,7 +57,7 @@ export class FieldsService {
     } = options;
 
     const location = CITY_COORDINATES[city];
-    const key = process.env.GOOGLE_API_KEY;
+    const key = this.configService.get<string>('GOOGLE_API_KEY');
     let url: string;
 
     if (pageToken) {
@@ -88,7 +88,7 @@ export class FieldsService {
 
   async getFieldByPlaceId(placeId: string): Promise<FieldDetails> {
     const baseGoogleUrl = this.configService.get<string>('GOOGLE_URL_DETAILS');
-    const apiKey = process.env.GOOGLE_API_KEY;
+    const apiKey = this.configService.get<string>('GOOGLE_API_KEY');
     const url = `${baseGoogleUrl}place_id=${placeId}&key=${apiKey}`;
 
     try {
