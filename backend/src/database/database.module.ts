@@ -5,6 +5,7 @@ import { Booking } from '../entities/booking.entity';
 import { Comment } from '../entities/comment.entity';
 import { Field } from '../entities/field.entity';
 import { User } from '../entities/user.entity';
+import { ExplainService } from './explain/explain.service';
 
 @Module({
   imports: [
@@ -22,5 +23,7 @@ import { User } from '../entities/user.entity';
       }),
     }),
   ],
+  providers: [ExplainService],
+  exports: [ExplainService],
 })
 export class DatabaseModule {}

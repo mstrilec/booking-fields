@@ -16,6 +16,7 @@ import {
   GooglePlacesResult,
 } from '../types/interfaces';
 import { CITY_COORDINATES } from '../utils/constants';
+import { convertRating, convertUserRatingTotal } from '../utils/functions';
 import { LoggerService } from '../utils/logger.service';
 
 @Injectable()
@@ -56,7 +57,7 @@ export class FieldsService {
     } = options;
 
     const location = CITY_COORDINATES[city];
-    const key = process.env.GOOGLE_API_KEY;
+    const key = this.configService.get<string>('GOOGLE_API_KEY');
     let url: string;
 
     if (pageToken) {
@@ -87,7 +88,7 @@ export class FieldsService {
 
   async getFieldByPlaceId(placeId: string): Promise<FieldDetails> {
     const baseGoogleUrl = this.configService.get<string>('GOOGLE_URL_DETAILS');
-    const apiKey = process.env.GOOGLE_API_KEY;
+    const apiKey = this.configService.get<string>('GOOGLE_API_KEY');
     const url = `${baseGoogleUrl}place_id=${placeId}&key=${apiKey}`;
 
     try {
@@ -122,14 +123,17 @@ export class FieldsService {
       return {
         placeId: result.place_id,
         name: result.name,
-        address: result.formatted_address,
+        address: result.vicinity || result.formatted_address,
         phoneNumber:
           localField?.phoneNumber ?? result.international_phone_number,
         price: localField?.price,
         additionalInfo: localField?.additionalInfo,
         location: result.geometry?.location,
         website: result.website,
-        reviews: result.reviews,
+        rating: result.rating,
+        userRatingTotal: result.user_ratings_total,
+        icon: result.icon,
+        reviews: result.reviews ?? [],
         photos: result.photos ?? [],
         comments: comments,
       };
@@ -200,18 +204,65 @@ export class FieldsService {
         });
 
         for (const apiField of fields) {
-          const exists = await this.fieldsRepo.findOne({
-            where: { placeId: apiField.place_id },
-          });
+          const placeId = apiField.place_id;
 
-          if (!exists) {
-            const newField = this.fieldsRepo.create({
-              placeId: apiField.place_id,
-              phoneNumber: undefined,
-              price: undefined,
-              additionalInfo: undefined,
+          try {
+            const details = await this.getFieldByPlaceId(placeId);
+
+            const existingField = await this.fieldsRepo.findOne({
+              where: { placeId },
             });
-            await this.fieldsRepo.save(newField);
+
+            if (existingField) {
+              this.fieldsRepo.merge(existingField, {
+                name: details.name,
+                address: details.address,
+                phoneNumber: details.phoneNumber ?? undefined,
+                price: details.price ?? undefined,
+                additionalInfo: details.additionalInfo ?? undefined,
+                location: details.location,
+                website: details.website,
+                rating: convertRating(details.rating),
+                userRatingTotal: convertUserRatingTotal(
+                  details.userRatingTotal,
+                ),
+                reviews: details.reviews,
+                photos: details.photos,
+              });
+
+              await this.fieldsRepo.save(existingField);
+              LoggerService.log(`📝 Updated field: ${placeId}`);
+            } else {
+              const newField = this.fieldsRepo.create({
+                placeId: details.placeId,
+                name: details.name,
+                address: details.address,
+                phoneNumber: details.phoneNumber ?? undefined,
+                price: details.price ?? undefined,
+                additionalInfo: details.additionalInfo ?? undefined,
+                location: details.location,
+                website: details.website,
+                rating: convertRating(details.rating),
+                userRatingTotal: convertUserRatingTotal(
+                  details.userRatingTotal,
+                ),
+                reviews: details.reviews,
+                photos: details.photos,
+              });
+
+              await this.fieldsRepo.save(newField);
+              LoggerService.log(`➕ Created new field: ${placeId}`);
+            }
+
+            await this.delayService.wait(250);
+          } catch (error) {
+            LoggerService.warn(
+              `⚠️ Failed to sync field ${placeId}: ${
+                error && typeof error === 'object' && 'message' in error
+                  ? (error as { message: string }).message
+                  : error
+              }`,
+            );
           }
         }
 
@@ -222,9 +273,9 @@ export class FieldsService {
         }
       } while (nextPageToken);
 
-      LoggerService.log(`✅ Completed for the city: ${city}`);
+      LoggerService.log(`✅ Completed sync for the city: ${city}`);
     }
 
-    LoggerService.log(`🎉 Synchronization is complete for all cities`);
+    LoggerService.log(`🎉 Synchronization completed for all cities`);
   }
 }
