@@ -41,4 +41,7 @@ export class Booking {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @Column({ type: 'numeric', nullable: true })
+  finalPrice: number;
 }

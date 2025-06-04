@@ -11,6 +11,7 @@ import DropDown from '../../components/DropDown/DropDown'
 import { useAuth } from '../../context/AuthContext'
 import { createBooking } from '../../services/bookingService'
 import { createField, getFieldByPlaceId } from '../../services/fieldService'
+import { getPhotoUrl } from '../../services/googleService'
 import { Field } from '../../types/interfaces'
 import { optionsTime } from '../../utils/constants'
 
@@ -61,12 +62,31 @@ const FieldPage = () => {
 		}
 	}, [placeId])
 
+	useEffect(() => {
+		if (!placeId) return
+
+		const interval = setInterval(async () => {
+			try {
+				const updatedField = await getFieldByPlaceId(placeId)
+
+				if (field && field.price !== updatedField.price) {
+					toast.warning(`Ціна змінилася на ${updatedField.price}₴`)
+				}
+
+				setField(updatedField)
+			} catch (err) {
+				console.error('Помилка оновлення:', err)
+			}
+		}, 10000)
+
+		return () => clearInterval(interval)
+	}, [placeId, field?.price])
+
 	const handleSubmit = async () => {
 		if (!user) {
 			toast.error('Для бронювання необхідно авторизуватися')
 			return
 		}
-
 		if (!startDate || !time) {
 			toast.error('Будь ласка, заповніть усі поля')
 			return
@@ -74,6 +94,20 @@ const FieldPage = () => {
 
 		try {
 			setIsSubmitting(true)
+
+			if (!placeId) return
+
+			const currentField = await getFieldByPlaceId(placeId)
+			const currentPrice = currentField.price
+
+			if (field && field.price !== currentPrice) {
+				toast.warning(
+					`Ціна змінилася на ${currentPrice}₴. Підтвердіть бронювання з новою ціною.`
+				)
+				setField(currentField)
+				return
+			}
+
 			const startTime = new Date(
 				startDate.getFullYear(),
 				startDate.getMonth(),
@@ -82,21 +116,26 @@ const FieldPage = () => {
 				time.getMinutes()
 			)
 			const endTime = new Date(startTime.getTime() + duration * 60000)
-			if (!placeId) return
-			const fieldFromBD = await createField(placeId)
 
+			const fieldFromBD = await createField(placeId)
 			await createBooking({
 				startTime,
 				endTime,
 				fieldId: fieldFromBD.id,
+				expectedPrice: currentPrice,
 			})
 
-			toast.success('Бронювання успішно створено!')
-
+			toast.success(`Бронювання створено! Ціна: ${currentPrice}₴/год`)
 			sessionStorage.removeItem('bookingDate')
 			sessionStorage.removeItem('bookingTime')
-		} catch {
-			toast.error('Помилка при створенні бронювання')
+		} catch (error) {
+			if (error instanceof Error && error.message === 'PRICE_CHANGED') {
+				toast.error('Ціна змінилася під час бронювання. Спробуйте ще раз.')
+				const updatedField = await getFieldByPlaceId(placeId!)
+				setField(updatedField)
+			} else {
+				toast.error('Помилка при створенні бронювання')
+			}
 		} finally {
 			setIsSubmitting(false)
 		}
@@ -122,9 +161,7 @@ const FieldPage = () => {
 				<div>
 					{field?.photos && field.photos.length > 0 ? (
 						<img
-							src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=600&photo_reference=${
-								field.photos[0].photo_reference
-							}&key=${import.meta.env.VITE_GOOGLE_API_KEY}`}
+							src={getPhotoUrl(field.photos[0].photo_reference)}
 							alt={field.name}
 							className='w-full h-64 object-cover rounded-xl mb-6'
 							referrerPolicy='no-referrer'
