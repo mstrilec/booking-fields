@@ -9,6 +9,7 @@ import { DelayModule } from './delay/delay.module';
 import { FieldsModule } from './fields/fields.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
 import { UsersModule } from './users/users.module';
+import { GoogleModule } from './google/google.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { UsersModule } from './users/users.module';
     CommentsModule,
     DelayModule,
     SchedulerModule,
+    GoogleModule,
   ],
   controllers: [],
   providers: [],

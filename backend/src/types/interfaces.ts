@@ -88,3 +88,44 @@ export interface FindNearbyFieldsOptions {
   type?: string;
   pageToken?: string;
 }
+
+export interface AddressComponent {
+  long_name: string;
+  short_name: string;
+  types: string[];
+}
+
+export interface Geometry {
+  location: {
+    lat: number;
+    lng: number;
+  };
+  location_type: string;
+  viewport: {
+    northeast: {
+      lat: number;
+      lng: number;
+    };
+    southwest: {
+      lat: number;
+      lng: number;
+    };
+  };
+}
+
+export interface GeocodeResult {
+  address_components: AddressComponent[];
+  formatted_address: string;
+  geometry: Geometry;
+  place_id: string;
+  plus_code?: {
+    compound_code: string;
+    global_code: string;
+  };
+  types: string[];
+}
+
+export interface GeocodeResponse {
+  results: GeocodeResult[];
+  status: string;
+}

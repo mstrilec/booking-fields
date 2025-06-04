@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { getPhotoUrl } from '../../services/googleService'
 import { Field } from '../../types/interfaces'
 
 interface FieldCardProps {
@@ -12,9 +13,7 @@ const FieldCard = ({ field }: FieldCardProps) => {
 		<div className='bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition duration-300 cursor-pointer flex flex-col justify-between'>
 			{field.photos && field.photos.length > 0 ? (
 				<img
-					src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${
-						field.photos[0].photo_reference
-					}&key=${import.meta.env.VITE_GOOGLE_API_KEY}`}
+					src={getPhotoUrl(field.photos[0].photo_reference)}
 					alt={field.name}
 					className='w-full h-48 object-cover'
 					referrerPolicy='no-referrer'

@@ -7,6 +7,7 @@ import DropDown from '../../components/DropDown/DropDown'
 import FieldCard from '../../components/FieldCard/FieldCard'
 import Map from '../../components/Map/Map'
 import { getNearbyFields } from '../../services/fieldService'
+import { getGeocode } from '../../services/googleService'
 import { AddressComponent, Field } from '../../types/interfaces'
 import {
 	optionsBusinessStatus,
@@ -82,12 +83,7 @@ const Fields = () => {
 				navigator.geolocation.getCurrentPosition(async position => {
 					const { latitude, longitude } = position.coords
 					try {
-						const res = await fetch(
-							`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${
-								import.meta.env.VITE_GOOGLE_API_KEY
-							}&language=uk`
-						)
-						const data = await res.json()
+						const data = await getGeocode(latitude, longitude)
 						const cityComponent = data.results[0]?.address_components.find(
 							(c: AddressComponent) => c.types.includes('locality')
 						)
