@@ -1,54 +1,111 @@
-# React + TypeScript + Vite
+# Frontend App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript + Vite client for the Booking Fields platform.
 
-Currently, two official plugins are available:
+The app focuses on field discovery, field details, booking creation, comments, and user profile management.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Main Features and Pages
 
-## Expanding the ESLint configuration
+- `/` home page with search entry points and featured content
+- `/fields` list page with city filter, pagination token flow, and map view
+- `/field/:placeId` details page with booking form, comments, and admin field editor
+- `/profile` protected user page with booking history/management
+- `/login` and `/register` auth flows
+- `/about` and `*` fallback page
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Architecture
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+### Routing
+
+- `react-router-dom` with a centralized route table in `src/App.tsx`
+- Protected routes are implemented via `PrivateRoute` for authenticated-only pages
+
+### State Management
+
+- Global auth state via React Context (`src/context/AuthContext.tsx`)
+- Local component/page state via React hooks (`useState`, `useEffect`)
+- Storage:
+  - `localStorage` for JWT token
+  - `sessionStorage` for selected city/date/time flow data
+
+### API Integration
+
+- Domain services in `src/services`:
+  - `authService`
+  - `fieldService`
+  - `bookingService`
+  - `commentService`
+  - `googleService`
+- Auth uses `fetch`; other domains use `axios`
+- Bearer token is attached for protected actions
+
+### Realtime Behavior
+
+- No WebSocket integration currently
+- Field detail page uses periodic refresh to detect data changes (for example, price updates)
+
+## Tech Stack
+
+- React 19 + TypeScript
+- Vite
+- React Router
+- Tailwind CSS
+- `@react-google-maps/api`
+- `react-toastify`, `react-datepicker`, `lucide-react`
+- Jest + ts-jest for tests
+
+## Environment Variables
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `VITE_GOOGLE_API_KEY` | yes | Google Maps JavaScript API key for map rendering |
+
+Important:
+
+- Backend base URL is currently hardcoded in service files as `http://localhost:5000`.
+- Ensure backend runs on port `5000` in local development, or adjust the API URL constants in `src/services`.
+
+## Run Locally
+
+1. Install dependencies:
+
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+1. Set environment variables (at minimum `VITE_GOOGLE_API_KEY`).
+1. Start dev server:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+```bash
+npm run dev
 ```
+
+## Build and Deploy
+
+### Production build
+
+```bash
+npm run build
+```
+
+This runs TypeScript project build (`tsc -b`) and Vite production build.
+
+### Preview build locally
+
+```bash
+npm run preview
+```
+
+### Deployment notes
+
+- Deploy the generated static output from Vite build.
+- Ensure runtime backend URL expectations are satisfied (currently `http://localhost:5000` in code unless changed).
+
+## Scripts
+
+- `npm run dev` - start local dev server
+- `npm run build` - build for production
+- `npm run preview` - preview built app
+- `npm run lint` - run ESLint
+- `npm test` - run Jest tests
+- `npm run test:watch` - run Jest in watch mode

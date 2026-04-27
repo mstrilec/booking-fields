@@ -1,98 +1,152 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Backend API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+NestJS API for the Booking Fields platform. The backend handles authentication, field discovery/synchronization, bookings, comments, and Google API proxy endpoints.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Responsibilities
 
-## Description
+- Authenticate users and issue JWT tokens
+- Authorize access with role-based guards (`user`, `admin`)
+- Serve field search/details data (Google + local DB metadata)
+- Manage booking lifecycle with overlap and ownership checks
+- Manage field comments and permissions
+- Run scheduled synchronization for field data
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Architecture
 
-## Project setup
+The app is modular and configured in `src/app.module.ts`.
+
+- `auth` - register/login/me, JWT strategy
+- `users` - user persistence logic
+- `fields` - nearby search, field details, local field metadata updates, sync
+- `bookings` - booking CRUD, conflict detection, price validation
+- `comments` - comments create/list/delete
+- `google` - photo and reverse-geocode proxy endpoints
+- `scheduler` - cron-based field synchronization trigger
+- `database` - TypeORM/PostgreSQL setup
+
+Core entities:
+
+- `User`
+- `Field`
+- `Booking`
+- `Comment`
+
+## API Overview
+
+### Auth
+
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/me` (JWT required)
+
+### Fields
+
+- `GET /fields` (query: `city`, `radius`, `pageToken`)
+- `GET /fields/:placeId`
+- `POST /fields/create`
+- `PATCH /fields/:placeId` (admin)
+- `POST /fields/sync` (admin)
+
+### Bookings
+
+- `GET /bookings` (JWT)
+- `GET /bookings/:id` (JWT)
+- `POST /bookings` (JWT)
+- `PATCH /bookings/:id` (JWT)
+- `DELETE /bookings/:id` (JWT)
+
+### Comments
+
+- `POST /comments` (JWT)
+- `GET /comments/field/:placeId`
+- `DELETE /comments/:id` (JWT)
+
+### Google Proxy
+
+- `GET /google/photo/:photoReference?maxwidth=400`
+- `GET /google/geocode?lat=...&lng=...`
+
+## Environment Variables
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `PORT` | no | API port (default `3000`) |
+| `DATABASE_HOST` | yes | PostgreSQL host |
+| `DATABASE_PORT` | no | PostgreSQL port (default `5432`) |
+| `DATABASE_USERNAME` | yes | PostgreSQL user |
+| `DATABASE_PASSWORD` | yes | PostgreSQL password |
+| `DATABASE_NAME` | yes | PostgreSQL database name |
+| `NODE_ENV` | no | When `production`, TypeORM `synchronize` is disabled |
+| `JWT_SECRET` | yes | JWT secret |
+| `JWT_EXPIRATION_TIME` | yes | Token TTL |
+| `GOOGLE_API_KEY` | yes | Google API key |
+| `GOOGLE_URL` | yes | Base URL for nearby search requests |
+| `GOOGLE_URL_DETAILS` | yes | Base URL for place details requests |
+| `DEFAULT_CITY` | no | Default city for nearby search (fallback: `Kyiv`) |
+| `DEFAULT_RADIUS` | no | Default search radius (fallback: `10000`) |
+| `DEFAULT_TYPE` | no | Default Google Places type (fallback: `stadium`) |
+
+## Run Locally
+
+1. Install dependencies:
 
 ```bash
-$ npm install
+npm install
 ```
 
-## Compile and run the project
+1. Configure environment variables.
+1. Ensure PostgreSQL is running and DB exists.
+1. Run migrations:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm run migration:run
 ```
 
-## Run tests
+1. Start in development:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run start:dev
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Testing
 
 ```bash
-$ npm install -g mau
-$ mau deploy
+npm run test
+npm run test:watch
+npm run test:cov
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Note: `npm run test:e2e` is configured, but requires `test/jest-e2e.json`.
 
-## Resources
+## Scripts
 
-Check out a few resources that may come in handy when working with NestJS:
+- `npm run build` - build Nest app
+- `npm run start` - start app
+- `npm run start:dev` - start in watch mode
+- `npm run start:debug` - debug + watch mode
+- `npm run start:prod` - run built app
+- `npm run lint` - lint and auto-fix
+- `npm run test` / `test:watch` / `test:cov` / `test:debug` / `test:e2e`
+- `npm run migration:generate` - generate migration
+- `npm run migration:run` - apply migrations
+- `npm run seed` - run data seeding
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Important Implementation Details
 
-## Support
+- **Auth and authorization**
+  - JWT-based auth using Passport strategy.
+  - Role checks are enforced with `RolesGuard` and `@Roles(...)`.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+- **Bookings and pricing**
+  - New booking creation rejects overlapping active bookings for the same field.
+  - Booking creation can reject stale UI price with `PRICE_CHANGED` when `expectedPrice` does not match the current field price.
+  - `finalPrice` is persisted from the field's current price at booking time.
 
-## Stay in touch
+- **Field data model**
+  - Field records are enriched from Google Places and merged with local metadata (`price`, `additionalInfo`, `phoneNumber`) and comments.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+- **Scheduling**
+  - A daily cron job (`EVERY_DAY_AT_10AM`) triggers full field synchronization across configured cities.
 
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- **Realtime**
+  - No WebSocket gateway is implemented currently; consumers should use polling/refresh where needed.
